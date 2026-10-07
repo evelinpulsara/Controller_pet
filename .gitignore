@@ -1,3 +1,14 @@
 # macOS
 .DS_Store
 
+# Archivos locales generados por Flutter / IDE
+.dart_tool/chrome-device/
+.dart_tool/extension_discovery/
+.idea/
+*.iml
+
+# Claves privadas (NUNCA subir)
+secrets.json
+
+# Generado por Flutter
+.flutter-plugins-dependencies
