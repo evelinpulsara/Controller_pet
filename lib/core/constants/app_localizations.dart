@@ -158,3 +158,82 @@ class AppL10n {
   String get sent => isEs ? 'Enviado' : 'Sent';
   String get whatsappError => isEs ? 'No se pudo abrir WhatsApp' : 'Could not open WhatsApp';
   String get close => isEs ? 'Cerrar' : 'Close';
+  String get alertMyContacts => isEs ? 'Avisar a mis contactos' : 'Alert my contacts';
+
+  // ── Contactos de emergencia ───────────────────────────────────────────────
+  String get emergencyContacts => isEs ? 'Contactos de emergencia' : 'Emergency contacts';
+  String contactsExplanation(String pet) => isEs
+      ? 'Si $pet sale de la zona segura, la IA escribirá un mensaje para pedirles ayuda a estas personas por WhatsApp.'
+      : 'If $pet leaves the safe zone, the AI will write a WhatsApp message asking these people for help.';
+  String get noContacts => isEs
+      ? 'Todavía no hay contactos.\nAgrega vecinos, familiares o amigos que puedan ayudarte.'
+      : 'No contacts yet.\nAdd neighbors, family or friends who can help you.';
+  String get addContact => isEs ? 'Agregar contacto' : 'Add contact';
+  String get contactName => isEs ? 'Nombre' : 'Name';
+  String get contactPhone => isEs ? 'Celular (WhatsApp)' : 'Mobile (WhatsApp)';
+  String get contactPhoneHelp => isEs ? 'Con código de país, ej: +57 300 123 4567' : 'With country code, e.g. +57 300 123 4567';
+  String get contactRelationship => isEs ? 'Parentesco (opcional): vecino, familiar...' : 'Relationship (optional): neighbor, family...';
+  String get contactError => isEs
+      ? 'Escribe el nombre y un celular válido con código de país.'
+      : 'Enter a name and a valid mobile number with country code.';
+  String get delete => isEs ? 'Eliminar' : 'Delete';
+
+  // ── Alerts ────────────────────────────────────────────────────────────────
+  String get noAlerts => isEs ? 'Sin alertas. Todo está bien 🐾' : 'No alerts yet. Everything looks fine 🐾';
+
+  /// Texto de cada alerta según su tipo, en el idioma elegido.
+  String alertMessage(AlertType type, Map<String, String> p) {
+    final pet = p['pet'] ?? '', zone = p['zone'] ?? '';
+    return switch (type) {
+      AlertType.leftSafeZone =>
+        isEs ? '$pet salió de la zona segura "$zone".' : '$pet left the safe zone "$zone".',
+      AlertType.enteredSafeZone =>
+        isEs ? '$pet regresó a la zona segura.' : '$pet is back in the safe zone.',
+      AlertType.lowBattery => isEs
+          ? 'La batería del collar de $pet está baja (${p['battery']}%).'
+          : "$pet's collar battery is low (${p['battery']}%).",
+      AlertType.gpsLost =>
+        isEs ? 'Se perdió la señal del GPS o está muy débil.' : 'GPS signal lost or very weak.',
+      AlertType.trackerDisconnected => isEs
+          ? 'El collar ${p['tracker']} se desconectó.'
+          : 'Collar ${p['tracker']} disconnected.',
+      AlertType.anomaly => switch (p['kind']) {
+          'stationary' => isEs
+              ? '$pet lleva ${p['minutes']} min sin moverse, algo poco común. ¿Está bien?'
+              : '$pet hasn\'t moved for ${p['minutes']} min, which is unusual. Are they OK?',
+          'speed' => isEs
+              ? '$pet se mueve muy rápido (${p['kmh']} km/h). ¿Va en un vehículo o huyó asustado?'
+              : '$pet is moving very fast (${p['kmh']} km/h). In a vehicle or running scared?',
+          'night' => isEs
+              ? '$pet salió de su zona de noche, a una hora poco habitual.'
+              : '$pet left their zone at night, an unusual time.',
+          _ => isEs ? 'Comportamiento inusual de $pet.' : 'Unusual behavior from $pet.',
+        },
+      AlertType.healthReminder => () {
+          final d = int.tryParse(p['days'] ?? '') ?? 0;
+          final when = d < 0
+              ? (isEs ? 'venció hace ${-d} día(s)' : 'was due ${-d} day(s) ago')
+              : d == 0
+                  ? (isEs ? 'es hoy' : 'is today')
+                  : (isEs ? 'vence en $d día(s)' : 'is due in $d day(s)');
+          return isEs ? '${p['title']} de $pet $when.' : "$pet's ${p['title']} $when.";
+        }(),
+    };
+  }
+
+  // ── History ───────────────────────────────────────────────────────────────
+  String get locationHistory => isEs ? 'Historial de ubicación' : 'Location history';
+  String get waitingLocation =>
+      isEs ? 'Esperando la primera actualización de ubicación...' : 'Waiting for the first location update...';
+
+  // ── Settings ──────────────────────────────────────────────────────────────
+  String get settings => isEs ? 'Ajustes' : 'Settings';
+  String get safeZoneAlerts => isEs ? 'Alertas de zona segura' : 'Safe zone alerts';
+  String get lowBatteryAlerts => isEs ? 'Alertas de batería baja' : 'Low battery alerts';
+  String get trackingInterval => isEs ? 'Intervalo de seguimiento' : 'Tracking interval';
+  String get units => isEs ? 'Unidades' : 'Units';
+  String get metric => isEs ? 'Métrico' : 'Metric';
+  String get imperial => isEs ? 'Imperial' : 'Imperial';
+  String get account => isEs ? 'Cuenta' : 'Account';
+  String get logOut => isEs ? 'Cerrar sesión' : 'Log out';
+}
