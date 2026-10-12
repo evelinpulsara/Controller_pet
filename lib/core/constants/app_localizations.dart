@@ -78,3 +78,83 @@ class AppL10n {
   String whereIs(String pet) => isEs ? '¿Dónde está $pet?' : 'Where is $pet?';
   String get recentPath => isEs ? 'Puntos: su recorrido reciente' : 'Dots: their recent path';
   String get profile => isEs ? 'Perfil' : 'Profile';
+  String get details => isEs ? 'Datos' : 'Details';
+  String get gpsOnline => isEs ? 'GPS activo' : 'GPS online';
+  String get gpsOffline => isEs ? 'GPS inactivo' : 'GPS offline';
+  String battery(int lvl) => isEs ? 'Batería $lvl%' : 'Battery $lvl%';
+  String get safeStatus => isEs ? 'Seguro' : 'Safe';
+  String get outsideZone => isEs ? 'Fuera de la zona' : 'Outside safe zone';
+  String get unknown => isEs ? 'Desconocido' : 'Unknown';
+  String get locationLabel => isEs ? 'Ubicación' : 'Location';
+  String get lastUpdate => isEs ? 'Última actualización' : 'Last update';
+  String get addPet => isEs ? 'Agregar mascota' : 'Add pet';
+  String get history => isEs ? 'Historial' : 'History';
+
+  // ── Add pet dialog ────────────────────────────────────────────────────────
+  String get addPetTitle => isEs ? 'Agregar mascota' : 'Add pet';
+  String get petName => isEs ? 'Nombre' : 'Name';
+  String get petSpecies => isEs ? 'Especie' : 'Species';
+  String get petBreed => isEs ? 'Raza' : 'Breed';
+  String get petAge => isEs ? 'Edad (años)' : 'Age (years)';
+  String get petWeight => isEs ? 'Peso (kg)' : 'Weight (kg)';
+
+  // ── Pet profile ───────────────────────────────────────────────────────────
+  String get name => isEs ? 'Nombre' : 'Name';
+  String get species => isEs ? 'Especie' : 'Species';
+  String get breed => isEs ? 'Raza' : 'Breed';
+  String get age => isEs ? 'Edad' : 'Age';
+  String ageYears(int y) => isEs ? '$y años' : '$y years';
+  String get weight => isEs ? 'Peso' : 'Weight';
+  String get emergencyContact => isEs ? 'Contacto de emergencia' : 'Emergency contact';
+  String get trackerId => isEs ? 'ID del tracker' : 'Tracker ID';
+  String get gpsStatus => isEs ? 'Estado del GPS' : 'GPS status';
+  String get connected => isEs ? 'Conectado' : 'Connected';
+  String get disconnected => isEs ? 'Desconectado' : 'Disconnected';
+
+  // ── Tracking ──────────────────────────────────────────────────────────────
+  String get liveTracking => isEs ? 'Seguimiento en vivo' : 'Live tracking';
+  String get trackingPaused => isEs ? 'Seguimiento pausado' : 'Tracking paused';
+  String get trackingInside => isEs ? 'Seguimiento: dentro de la zona' : 'Tracking: inside zone';
+  String get trackingOutside => isEs ? 'Seguimiento: fuera de la zona' : 'Tracking: outside zone';
+  String get coordinates => isEs ? 'Coordenadas' : 'Coordinates';
+  String get lastUpdated => isEs ? 'Última actualización' : 'Last updated';
+  String get distanceFromHome => isEs ? 'Distancia desde casa' : 'Distance from home';
+  String get insideZoneMsg => isEs ? 'Dentro de la zona segura' : 'Inside safe zone';
+  String outsideZoneByMsg(String dist) =>
+      isEs ? 'Fuera de la zona por $dist' : 'Outside safe zone by $dist';
+
+  // ── Geofencing ────────────────────────────────────────────────────────────
+  String get safeZone => isEs ? 'Zona segura' : 'Safe zone';
+  String get zoneName => isEs ? 'Nombre de la zona' : 'Zone name';
+  String radiusLabel(String dist) => isEs ? 'Radio: $dist' : 'Radius: $dist';
+  String get zoneEnabled => isEs ? 'Zona activada' : 'Zone enabled';
+  String get saveZone => isEs ? 'Guardar zona' : 'Save zone';
+  String get zoneSaved => isEs ? 'Zona segura guardada' : 'Safe zone saved';
+  String get simulateLeave => isEs ? 'Simular que la mascota sale de la zona' : 'Simulate pet leaving the zone';
+  String get simulateLeaveSubtitle =>
+      isEs ? 'Desactivar para que vuelva a casa' : 'Turn off to let the pet wander back home';
+  String get simulateDisconnect => isEs ? 'Simular desconexión del tracker' : 'Simulate tracker disconnect';
+
+  // ── Asistente de emergencias (IA) ─────────────────────────────────────────
+  String get emergencyAssistant => isEs ? 'Asistente de emergencias IA' : 'AI emergency assistant';
+  String assistantWatching(String pet, int n) => isEs
+      ? 'Estoy vigilando a $pet. Si sale de la zona segura, te aviso al instante y preparo un mensaje '
+          'de WhatsApp para pedir ayuda a ${n == 1 ? 'tu contacto' : 'tus $n contactos'} de emergencia.'
+      : "I'm watching $pet. If they leave the safe zone, I'll alert you right away and write a WhatsApp "
+          'message asking your $n emergency contact${n == 1 ? '' : 's'} for help.';
+  String manageContacts(int n) => isEs ? 'Contactos de emergencia ($n)' : 'Emergency contacts ($n)';
+  String petLostTitle(String pet) => isEs ? '🚨 ¡$pet salió de la zona segura!' : '🚨 $pet left the safe zone!';
+  String petFoundTitle(String pet) => isEs ? '$pet regresó a la zona segura' : '$pet is back in the safe zone';
+  String petFoundBody(String pet) => isEs
+      ? '¡Qué alivio! Puedes contarles a los contactos que avisaste que $pet ya apareció.'
+      : 'What a relief! You can tell the contacts you alerted that $pet is back.';
+  String get aiWriting => isEs ? 'La IA está escribiendo los avisos...' : 'The AI is writing the alerts...';
+  String get messageForContacts => isEs ? 'Mensaje para tus contactos:' : 'Message for your contacts:';
+  String get noContactsToNotify => isEs
+      ? 'Aún no tienes contactos de emergencia. Agrega al menos uno para poder pedir ayuda.'
+      : "You don't have emergency contacts yet. Add at least one so you can ask for help.";
+  String get sendWhatsApp => isEs ? 'Avisar por WhatsApp' : 'Alert on WhatsApp';
+  String get sendFoundWhatsApp => isEs ? 'Avisar que apareció' : 'Say they were found';
+  String get sent => isEs ? 'Enviado' : 'Sent';
+  String get whatsappError => isEs ? 'No se pudo abrir WhatsApp' : 'Could not open WhatsApp';
+  String get close => isEs ? 'Cerrar' : 'Close';
