@@ -48,3 +48,48 @@ AppController buildController(LocalStore store, {PetSafetyAiService? ai, AlertSo
     storageMode: mode,
     auth: db == null ? null : SupabaseAuthService(db),
     petRepository: SwitchingPetRepository(mode, LocalPetRepository(store), db == null ? null : SupabasePetRepository(db)),
+    trackerRepository:
+        SwitchingTrackerRepository(mode, LocalTrackerRepository(store), db == null ? null : SupabaseTrackerRepository(db)),
+    locationRepository:
+        SwitchingLocationRepository(mode, LocalLocationRepository(store), db == null ? null : SupabaseLocationRepository(db)),
+    safeZoneRepository:
+        SwitchingSafeZoneRepository(mode, LocalSafeZoneRepository(store), db == null ? null : SupabaseSafeZoneRepository(db)),
+    alertRepository: SwitchingAlertRepository(mode, LocalAlertRepository(store), db == null ? null : SupabaseAlertRepository(db)),
+    contactRepository:
+        SwitchingContactRepository(mode, LocalContactRepository(store), db == null ? null : SupabaseContactRepository(db)),
+    walkRepository: SwitchingWalkRepository(mode, LocalWalkRepository(store), db == null ? null : SupabaseWalkRepository(db)),
+    activityRepository:
+        SwitchingActivityRepository(mode, LocalActivityRepository(store), db == null ? null : SupabaseActivityRepository(db)),
+    healthRepository:
+        SwitchingHealthRepository(mode, LocalHealthRepository(store), db == null ? null : SupabaseHealthRepository(db)),
+    aiService: ai ?? _buildAiService(),
+    sound: sound ?? AudioAlertSound(),
+    // Cuenta demo: collar SIMULADO (se mueve solo, para probar).
+    // Cuentas reales: collar real; sus ubicaciones llegan a Supabase (report_location)
+    // y la app las lee de ahí. Sin Supabase, el collar queda esperando señal.
+    collarFactory: (pet, lat, lng, demo) {
+      if (demo) return MockLocationService(homeLat: lat, homeLng: lng, seed: pet.id.hashCode);
+      if (db != null && mode.remote) return SupabaseCollarService(db, pet.id);
+      return PendingCollarService(pet.trackerId);
+    },
+  );
+}
+
+/// Conecta con Supabase (esquema `pettracker`). Si falla, la app sigue funcionando sin la nube.
+Future<SupabaseClient?> _connectSupabase() async {
+  if (!SupabaseConfig.configured) return null;
+  try {
+    await Supabase.initialize(
+      url: SupabaseConfig.url,
+      publishableKey: SupabaseConfig.publishableKey,
+      postgrestOptions: const PostgrestClientOptions(schema: SupabaseConfig.schema),
+    );
+    return Supabase.instance.client;
+  } catch (e) {
+    debugPrint('[Supabase] No se pudo iniciar: $e');
+    return null;
+  }
+}
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
