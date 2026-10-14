@@ -98,3 +98,103 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
+class _LoginScreenState extends State<LoginScreen> {
+  final _email = TextEditingController();
+  final _password = TextEditingController();
+  bool _register = false, _loading = false, _hidePassword = true;
+
+  Future<void> _submit({bool demo = false}) async {
+    final c = AppScope.of(context);
+    final l = AppL10n.fromLocale(c.locale);
+    if (demo) {
+      _email.text = AppController.demoEmail;
+      _password.text = AppController.demoPassword;
+    }
+    setState(() => _loading = true);
+    final r = await c.login(_email.text.trim(), _password.text, register: _register && !demo);
+    if (!mounted) return;
+    setState(() => _loading = false);
+    switch (r.status) {
+      case LoginStatus.ok:
+        Navigator.pushReplacementNamed(context, AppRoutes.nextFor(c));
+      case LoginStatus.confirmEmail:
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            icon: Icon(Icons.mark_email_unread_rounded, color: context.accent, size: 40),
+            title: Text(l.t('Confirma tu correo', 'Confirm your email')),
+            content: Text(l.t(
+                'Te enviamos un correo a ${_email.text.trim()}. Abre el enlace para activar tu cuenta y luego inicia sesión aquí.',
+                'We sent an email to ${_email.text.trim()}. Open the link to activate your account, then log in here.')),
+            actions: [
+              FilledButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  setState(() => _register = false);
+                },
+                child: Text(l.t('Entendido', 'Got it')),
+              ),
+            ],
+          ),
+        );
+      case LoginStatus.invalid:
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(_register
+                ? l.loginError
+                : l.t('Correo o contraseña incorrectos.', 'Wrong email or password.'))));
+      case LoginStatus.error:
+        final m = r.message ?? '';
+        final friendly = m.toLowerCase().contains('already registered')
+            ? l.t('Ese correo ya tiene una cuenta. Inicia sesión.', 'That email already has an account. Log in.')
+            : m.toLowerCase().contains('rate limit')
+                ? l.t('Demasiados intentos. Espera unos minutos e inténtalo de nuevo.', 'Too many attempts. Wait a few minutes and try again.')
+                : m.toLowerCase().contains('socket') || m.toLowerCase().contains('network') || m.toLowerCase().contains('failed host')
+                    ? l.t('Sin conexión a internet. Revisa tu conexión.', 'No internet connection. Check your connection.')
+                    : (m.isEmpty ? l.loginError : m);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(friendly)));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppScope.of(context);
+    final l = AppL10n.fromLocale(c.locale);
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: AutofillGroup(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(color: context.accent, shape: BoxShape.circle),
+                    child: const Icon(Icons.pets_rounded, color: Colors.white, size: 32),
+                  ),
+                  const SizedBox(height: 24),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    child: Text(_register ? l.createAccount : l.welcomeBack,
+                        key: ValueKey(_register), style: context.text.headlineMedium),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(l.loginTagline, style: context.text.bodyLarge?.copyWith(color: context.colors.muted)),
+                  const SizedBox(height: 32),
+                  TextField(
+                    controller: _email,
+                    keyboardType: TextInputType.emailAddress,
+                    autofillHints: const [AutofillHints.email],
+                    decoration:
+                        InputDecoration(labelText: l.email, prefixIcon: const Icon(Icons.alternate_email_rounded)),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _password,
+                    obscureText: _hidePassword,
+                    autofillHints: const [AutofillHints.password],
+                    onSubmitted: (_) => _submit(),
+                    decoration: InputDecoration(
+                      labelText: l.password,
