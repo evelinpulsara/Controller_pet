@@ -198,3 +198,64 @@ class _LoginScreenState extends State<LoginScreen> {
                     onSubmitted: (_) => _submit(),
                     decoration: InputDecoration(
                       labelText: l.password,
+                      prefixIcon: const Icon(Icons.lock_outline_rounded),
+                      suffixIcon: IconButton(
+                        tooltip: _hidePassword ? l.t('Mostrar contraseña', 'Show password') : l.t('Ocultar contraseña', 'Hide password'),
+                        icon: Icon(_hidePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                        onPressed: () => setState(() => _hidePassword = !_hidePassword),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: _loading ? null : _submit,
+                      child: _loading
+                          ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5))
+                          : Text(_register ? l.register : l.logIn),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Center(
+                    child: TextButton(
+                      onPressed: () => setState(() => _register = !_register),
+                      child: Text(_register ? l.iHaveAccount : l.createAccountLink),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(children: [
+                    Expanded(child: Divider(color: context.colors.line)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(l.t('o', 'or'), style: context.text.bodySmall),
+                    ),
+                    Expanded(child: Divider(color: context.colors.line)),
+                  ]),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _loading ? null : () => _submit(demo: true),
+                      icon: const Icon(Icons.science_outlined),
+                      label: Text(l.t('Probar con la cuenta demo', 'Try the demo account')),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Center(
+                    child: Text(
+                      l.t('Trae mascotas de ejemplo y un collar GPS simulado que se mueve cerca de ti.',
+                          'Comes with sample pets and a simulated GPS collar moving near you.'),
+                      textAlign: TextAlign.center,
+                      style: context.text.bodySmall,
+                    ),
+                  ),
+                ]),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
