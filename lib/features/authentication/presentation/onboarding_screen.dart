@@ -88,3 +88,37 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                   ]),
                 );
+              },
+            ),
+          ),
+          // Puntos de página
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            for (var i = 0; i < pages.length; i++)
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: i == _i ? 24 : 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: i == _i ? context.accent : context.colors.line,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+          ]),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: last
+                    ? _finish
+                    : () => _page.nextPage(duration: const Duration(milliseconds: 350), curve: Curves.easeOutCubic),
+                child: Text(last ? l.t('Empezar', 'Get started') : l.t('Siguiente', 'Next')),
+              ),
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+}
