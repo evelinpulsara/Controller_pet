@@ -58,3 +58,64 @@ class Pet {
   /// Meta sugerida según la especie.
   static double suggestedGoal(String species) {
     final s = species.toLowerCase();
+    if (s.startsWith('gat') || s.startsWith('cat')) return 800;
+    if (s.startsWith('perr') || s.startsWith('dog')) return 3000;
+    return 1500;
+  }
+}
+
+/// Color por defecto para mascotas nuevas.
+const defaultPetColor = PetPalette.defaultColor;
+
+/// Collar GPS de una mascota.
+class TrackerDevice {
+  final String id;
+  final int batteryLevel;
+  final bool isConnected;
+  final DateTime lastUpdate;
+  /// Modo ahorro: envía la ubicación con menos frecuencia para durar más.
+  final bool powerSave;
+  /// Calidad de señal de 0 a 4 (según la precisión del GPS).
+  final int signal;
+  const TrackerDevice({
+    required this.id, required this.batteryLevel,
+    required this.isConnected, required this.lastUpdate,
+    this.powerSave = false, this.signal = 4,
+  });
+  TrackerDevice copyWith({int? batteryLevel, bool? isConnected, DateTime? lastUpdate, bool? powerSave, int? signal}) =>
+      TrackerDevice(
+        id: id,
+        batteryLevel: batteryLevel ?? this.batteryLevel,
+        isConnected: isConnected ?? this.isConnected,
+        lastUpdate: lastUpdate ?? this.lastUpdate,
+        powerSave: powerSave ?? this.powerSave,
+        signal: signal ?? this.signal,
+      );
+
+  /// Horas aproximadas que le quedan a la batería.
+  double get estimatedHoursLeft => batteryLevel * (powerSave ? 0.72 : 0.36);
+
+  Map<String, dynamic> toJson() => {
+        'id': id, 'battery': batteryLevel, 'connected': isConnected,
+        'last': lastUpdate.toIso8601String(), 'powerSave': powerSave, 'signal': signal,
+      };
+  factory TrackerDevice.fromJson(Map<String, dynamic> j) => TrackerDevice(
+        id: j['id'], batteryLevel: (j['battery'] as num?)?.toInt() ?? 100,
+        isConnected: j['connected'] ?? true,
+        lastUpdate: DateTime.tryParse(j['last'] ?? '') ?? DateTime.now(),
+        powerSave: j['powerSave'] ?? false, signal: (j['signal'] as num?)?.toInt() ?? 4,
+      );
+}
+
+/// Cambiar por versiones que usen la API del backend cuando esté lista.
+abstract class PetRepository {
+  Future<List<Pet>> getPets();
+  Future<void> addPet(Pet pet);
+  Future<void> updatePet(Pet pet);
+  Future<void> deletePet(String id);
+}
+
+abstract class TrackerRepository {
+  Future<TrackerDevice> getTracker(String trackerId);
+  Future<void> saveTracker(TrackerDevice tracker);
+}
