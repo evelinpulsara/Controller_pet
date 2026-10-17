@@ -118,3 +118,133 @@ class DashboardScreen extends StatelessWidget {
 
 /// Tarjeta de la cuenta demo.
 class _DemoCard extends StatefulWidget {
+  const _DemoCard();
+  @override
+  State<_DemoCard> createState() => _DemoCardState();
+}
+
+class _DemoCardState extends State<_DemoCard> {
+  bool _busy = false;
+
+  Future<void> _run(Future<void> Function() f) async {
+    setState(() => _busy = true);
+    try {
+      await f();
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppScope.of(context);
+    final l = AppL10n.fromLocale(c.locale);
+    final here = c.ownerTracking;
+    return AppCard(
+      color: AppTheme.warning.withValues(alpha: 0.12),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          const Icon(Icons.science_rounded, color: AppTheme.warning),
+          const SizedBox(width: 8),
+          Expanded(child: Text(l.t('Cuenta demo: GPS simulado', 'Demo account: simulated GPS'), style: context.text.titleMedium)),
+        ]),
+        const SizedBox(height: 6),
+        Text(
+          here
+              ? l.t('Los collares simulados se mueven cerca de ti, igual que lo haría un collar GPS real. Tu ubicación es el punto azul del mapa.',
+                  'The simulated collars move near you, just like a real GPS collar would. You are the blue dot on the map.')
+              : l.t('Aquí los collares son simulados. Activa tu ubicación y la demo aparecerá donde estás: verás a la mascota moverse cerca de ti como con un GPS real.',
+                  'Collars here are simulated. Turn on your location and the demo will appear where you are: the pet will move near you like with a real GPS.'),
+          style: context.text.bodySmall,
+        ),
+        const SizedBox(height: 10),
+        if (_busy)
+          const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2.5))
+        else
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            if (!here)
+              FilledButton.icon(
+                style: FilledButton.styleFrom(backgroundColor: ownerBlue, minimumSize: const Size(0, 42)),
+                onPressed: () => _run(() => enableOwnerLocation(context)),
+                icon: const Icon(Icons.my_location_rounded, size: 18),
+                label: Text(l.t('Usar mi ubicación', 'Use my location')),
+              )
+            else if (c.ownerPosition != null)
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(minimumSize: const Size(0, 42)),
+                onPressed: () => _run(() => c.relocateDemoTo(c.ownerPosition!)),
+                icon: const Icon(Icons.near_me_rounded, size: 18),
+                label: Text(l.t('Mover la demo aquí', 'Move the demo here')),
+              ),
+          ]),
+      ]),
+    );
+  }
+}
+
+/// Fila de mascotas: cada una en un círculo con su color; la seleccionada crece.
+class _PetSwitcher extends StatelessWidget {
+  const _PetSwitcher({required this.onAdd});
+  final VoidCallback onAdd;
+  @override
+  Widget build(BuildContext context) {
+    final c = AppScope.of(context);
+    final l = AppL10n.fromLocale(c.locale);
+    return SizedBox(
+      height: 78,
+      child: ListView(scrollDirection: Axis.horizontal, children: [
+        for (final p in c.pets)
+          Padding(
+            padding: const EdgeInsets.only(right: 14),
+            child: _SwitcherItem(
+              label: p.name,
+              selected: p.id == c.selectedPet?.id,
+              color: p.color,
+              alert: c.sessions[p.id]?.emergency?.isActive == true,
+              onTap: () => c.selectPet(p),
+              child: PetPhoto(pet: p, size: 48),
+            ),
+          ),
+        _SwitcherItem(
+          label: l.t('Agregar', 'Add'),
+          selected: false,
+          color: context.colors.muted,
+          onTap: onAdd,
+          dashed: true,
+          child: Icon(Icons.add_rounded, color: context.colors.muted),
+        ),
+      ]),
+    );
+  }
+}
+
+class _SwitcherItem extends StatelessWidget {
+  const _SwitcherItem({
+    required this.label,
+    required this.selected,
+    required this.color,
+    required this.onTap,
+    required this.child,
+    this.dashed = false,
+    this.alert = false,
+  });
+  final String label;
+  final bool selected, dashed, alert;
+  final Color color;
+  final VoidCallback onTap;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        button: true,
+        selected: selected,
+        label: label,
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          child: Column(children: [
+            Badge(
+              isLabelVisible: alert,
+              backgroundColor: AppTheme.danger,
+              smallSize: 12,
+              child: AnimatedContainer(
