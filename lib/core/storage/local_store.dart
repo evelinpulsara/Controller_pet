@@ -58,3 +58,38 @@ class LocalStore {
   Future<void> setString(String key, String value) => _prefs.setString(_key(key), value);
   bool? getBool(String key) => _prefs.getBool(_key(key));
   Future<void> setBool(String key, bool value) => _prefs.setBool(_key(key), value);
+  int? getInt(String key) => _prefs.getInt(_key(key));
+  Future<void> setInt(String key, int value) => _prefs.setInt(_key(key), value);
+
+  // ── Datos generales (no dependen del usuario): sesión, idioma, tema ──────
+  Object? readGlobal(String key) {
+    final raw = _prefs.getString('$_prefix$key');
+    if (raw == null) return null;
+    try {
+      return jsonDecode(raw);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> writeGlobal(String key, Object? value) => _prefs.setString('$_prefix$key', jsonEncode(value));
+  Future<void> removeGlobal(String key) => _prefs.remove('$_prefix$key');
+  bool? getGlobalBool(String key) => _prefs.getBool('$_prefix$key');
+  Future<void> setGlobalBool(String key, bool value) => _prefs.setBool('$_prefix$key', value);
+
+  /// Borra todos los datos del usuario actual (por ejemplo, para reiniciar la demo).
+  Future<void> clearScope() async {
+    if (_scope == null) return;
+    final p = '${_prefix}u.$_scope.';
+    for (final k in _prefs.getKeys().where((k) => k.startsWith(p)).toList()) {
+      await _prefs.remove(k);
+    }
+  }
+
+  /// Borra todo lo de la app (cerrar sesión y empezar de cero).
+  Future<void> clearAll() async {
+    for (final k in _prefs.getKeys().where((k) => k.startsWith(_prefix)).toList()) {
+      await _prefs.remove(k);
+    }
+  }
+}
