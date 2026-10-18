@@ -88,3 +88,113 @@ class LocalAlertRepository implements AlertRepository {
 
   @override
   Future<void> clear(String petId) => _s.remove(_k(petId));
+}
+
+class LocalLocationRepository implements LocationRepository {
+  LocalLocationRepository(this._s);
+  final LocalStore _s;
+  String _k(String petId) => 'history.$petId';
+  final Map<String, List<LocationHistory>> _cache = {};
+  final Map<String, int> _pending = {};
+  /// La memoria intermedia es por usuario y mascota.
+  String _c(String petId) => '${_s.scope}|$petId';
+
+  @override
+  Future<List<LocationHistory>> getHistory(String petId) async =>
+      List.of(_cache[_c(petId)] ??= _s.readList(_k(petId), LocationHistory.fromJson));
+
+  /// Olvida lo que tiene en memoria (al cambiar de usuario o reiniciar la demo).
+  void clearCache() {
+    _cache.clear();
+    _pending.clear();
+  }
+
+  @override
+  Future<void> addLocation(LocationHistory e) async {
+    final l = _cache[_c(e.petId)] ??= _s.readList(_k(e.petId), LocationHistory.fromJson);
+    l.insert(0, e);
+    if (l.length > 300) l.removeRange(300, l.length);
+    // Se guarda cada 10 ubicaciones para no escribir en disco a cada segundo.
+    final n = (_pending[_c(e.petId)] ?? 0) + 1;
+    _pending[_c(e.petId)] = n % 10;
+    if (n >= 10) await _s.writeList(_k(e.petId), l, (x) => x.toJson());
+  }
+}
+
+class LocalContactRepository implements ContactRepository {
+  LocalContactRepository(this._s);
+  final LocalStore _s;
+  static const _k = 'contacts';
+  List<EmergencyContact> _all() => _s.readList(_k, EmergencyContact.fromJson);
+
+  @override
+  Future<List<EmergencyContact>> getContacts(String petId) async => _all().where((c) => c.petId == petId).toList();
+  @override
+  Future<void> addContact(EmergencyContact c) => _s.writeList(_k, [..._all(), c], (x) => x.toJson());
+  @override
+  Future<void> deleteContact(String id) =>
+      _s.writeList(_k, _all().where((c) => c.id != id).toList(), (x) => x.toJson());
+}
+
+class LocalWalkRepository implements WalkRepository {
+  LocalWalkRepository(this._s);
+  final LocalStore _s;
+  String _k(String petId) => 'walks.$petId';
+  final Map<String, String> _petOf = {};
+
+  @override
+  Future<List<Walk>> getWalks(String petId) async {
+    final l = _s.readList(_k(petId), Walk.fromJson)..sort((a, b) => b.start.compareTo(a.start));
+    for (final w in l) {
+      _petOf[w.id] = petId;
+    }
+    return l;
+  }
+
+  @override
+  Future<void> saveWalk(Walk w) async {
+    _petOf[w.id] = w.petId;
+    final l = (await getWalks(w.petId)).where((x) => x.id != w.id).toList()..insert(0, w);
+    await _s.writeList(_k(w.petId), l.take(50).toList(), (x) => x.toJson());
+  }
+
+  @override
+  Future<void> deleteWalk(String id) async {
+    final petId = _petOf[id];
+    if (petId == null) return;
+    final l = (await getWalks(petId)).where((x) => x.id != id).toList();
+    await _s.writeList(_k(petId), l, (x) => x.toJson());
+  }
+}
+
+class LocalActivityRepository implements ActivityRepository {
+  LocalActivityRepository(this._s);
+  final LocalStore _s;
+  String _k(String petId) => 'activity.$petId';
+
+  @override
+  Future<List<DailyActivity>> getActivity(String petId) async => _s.readList(_k(petId), DailyActivity.fromJson);
+  @override
+  Future<void> saveDay(DailyActivity d) async {
+    final l = (await getActivity(d.petId)).where((x) => x.day != d.day).toList()..add(d);
+    l.sort((a, b) => a.day.compareTo(b.day));
+    await _s.writeList(_k(d.petId), l.length > 60 ? l.sublist(l.length - 60) : l, (x) => x.toJson());
+  }
+}
+
+class LocalHealthRepository implements HealthRepository {
+  LocalHealthRepository(this._s);
+  final LocalStore _s;
+  static const _k = 'health';
+  List<HealthRecord> _all() => _s.readList(_k, HealthRecord.fromJson);
+
+  @override
+  Future<List<HealthRecord>> getRecords(String petId) async =>
+      _all().where((r) => r.petId == petId).toList()..sort((a, b) => b.date.compareTo(a.date));
+  @override
+  Future<void> saveRecord(HealthRecord r) =>
+      _s.writeList(_k, [..._all().where((x) => x.id != r.id), r], (x) => x.toJson());
+  @override
+  Future<void> deleteRecord(String id) =>
+      _s.writeList(_k, _all().where((x) => x.id != id).toList(), (x) => x.toJson());
+}
