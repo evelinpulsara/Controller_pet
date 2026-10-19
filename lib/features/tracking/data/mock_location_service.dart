@@ -48,3 +48,43 @@ class MockLocationService implements LocationService {
     } else if (walking) {
       // Paseo: avanza ~1.3 m/s girando suavemente.
       _heading += (_rnd.nextDouble() - 0.5) * 0.5;
+      final step = 1.3 * secs;
+      _lat += _mLat(step * cos(_heading));
+      _lng += _mLng(step * sin(_heading));
+    } else {
+      // En casa: pequeños movimientos (como máximo ~1 m/s) y vuelve poco a poco al centro.
+      final wander = 2 * min(secs, 3.0);
+      _lat += _mLat((_rnd.nextDouble() - .5) * wander) + (homeLat - _lat) * 0.15 * min(1, secs / 3);
+      _lng += _mLng((_rnd.nextDouble() - .5) * wander) + (homeLng - _lng) * 0.15 * min(1, secs / 3);
+    }
+    return _snapshot();
+  }
+
+  @override
+  void setInterval(Duration d) {
+    _interval = d;
+    if (_timer != null) _start();
+  }
+
+  void _start() {
+    _timer?.cancel();
+    _timer = Timer.periodic(_interval, (_) {
+      if (!_ctrl.isClosed) _ctrl.add(_next());
+    });
+  }
+
+  @override
+  Future<LocationData> getCurrentLocation() async => _snapshot();
+
+  @override
+  Stream<LocationData> watchLocation() {
+    if (_timer == null) _start();
+    return _ctrl.stream;
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _ctrl.close();
+  }
+}
