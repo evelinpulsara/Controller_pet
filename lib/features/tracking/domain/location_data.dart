@@ -18,3 +18,23 @@ class LocationHistory {
   const LocationHistory({required this.id, required this.petId, required this.location, required this.status});
 
   bool get inside => status.startsWith('Inside');
+
+  Map<String, dynamic> toJson() => {'id': id, 'petId': petId, 'status': status, 'loc': location.toJson()};
+  factory LocationHistory.fromJson(Map<String, dynamic> j) => LocationHistory(
+        id: j['id'], petId: j['petId'], status: j['status'] ?? 'Inside safe zone',
+        location: LocationData.fromJson(Map<String, dynamic>.from(j['loc'])));
+}
+
+/// Fuente de ubicaciones de UN collar. Hoy es simulada ([MockLocationService]);
+/// cuando el GPS real esté listo, se cambia por una que lea del collar o del backend.
+abstract class LocationService {
+  Future<LocationData> getCurrentLocation();
+  Stream<LocationData> watchLocation();
+  void setInterval(Duration d) {}
+  void dispose() {}
+}
+
+abstract class LocationRepository {
+  Future<List<LocationHistory>> getHistory(String petId);
+  Future<void> addLocation(LocationHistory entry);
+}
