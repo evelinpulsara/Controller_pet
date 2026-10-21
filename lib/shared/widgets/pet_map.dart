@@ -168,3 +168,51 @@ class _ZoneCircles extends StatelessWidget {
   const _ZoneCircles({required this.circles});
   final List<_Circle> circles;
   @override
+  Widget build(BuildContext context) {
+    final camera = MapCamera.of(context);
+    return IgnorePointer(
+      child: CustomPaint(size: Size.infinite, painter: _CirclesPainter(camera, circles)),
+    );
+  }
+}
+
+class _CirclesPainter extends CustomPainter {
+  _CirclesPainter(this.camera, this.circles);
+  final MapCamera camera;
+  final List<_Circle> circles;
+  static const _distance = Distance();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (final c in circles) {
+      final center = camera.latLngToScreenOffset(c.center);
+      final edge = camera.latLngToScreenOffset(_distance.offset(c.center, c.radiusMeters, 180));
+      final r = (edge - center).distance;
+      if (!r.isFinite || !center.dx.isFinite || !center.dy.isFinite || r <= 0) continue;
+      canvas.drawCircle(center, r, Paint()..color = c.fill);
+      canvas.drawCircle(
+          center,
+          r,
+          Paint()
+            ..color = c.border
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = c.borderWidth);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _CirclesPainter old) => true;
+}
+
+/// Radio válido: un número real y mayor que 0.
+bool _ok(double? v) => v != null && v.isFinite && v > 0;
+
+/// Calcula la distancia del mapa mostrando zonas y mascota.
+double zoomFor(double meters) {
+  if (meters < 150) return 17.5;
+  if (meters < 300) return 16.5;
+  if (meters < 700) return 15.5;
+  if (meters < 1500) return 14.5;
+  if (meters < 3000) return 13.5;
+  return 12.5;
+}
