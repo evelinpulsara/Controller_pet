@@ -1,0 +1,80 @@
+import 'dart:async';
+import 'dart:math';
+import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
+import '../../../core/location/owner_location.dart';
+import '../../../core/constants/app_constants.dart';
+import '../../../core/constants/app_localizations.dart';
+import '../../../core/sound/alert_sound.dart';
+import '../../../core/storage/local_store.dart';
+import '../../../core/storage/supabase_repositories.dart';
+import '../../../core/storage/switching_repositories.dart';
+import '../../../core/util/ids.dart';
+import '../../authentication/data/auth_service.dart';
+import '../../../core/utils/geo_utils.dart';
+import '../../activity/domain/daily_activity.dart';
+import '../../alerts/domain/pet_alert.dart';
+import '../../assistant/domain/pet_emergency.dart';
+import '../../assistant/pet_safety_ai_service.dart';
+import '../../authentication/domain/user.dart';
+import '../../contacts/domain/emergency_contact.dart';
+import '../../geofencing/domain/safe_zone.dart';
+import '../../health/domain/health_record.dart';
+import '../../pets/domain/pet.dart';
+import '../../walks/domain/walk.dart';
+import '../domain/location_data.dart';
+import 'pet_session.dart';
+
+/// Crea el servicio de ubicación del collar de una mascota.
+/// Hoy devuelve un collar simulado; con el GPS real, devuelve el servicio real.
+/// [demo] = true solo en la cuenta demo (collar simulado).
+typedef CollarFactory = LocationService Function(Pet pet, double homeLat, double homeLng, bool demo);
+
+/// Controlador principal: usuario, mascotas, configuración y una
+/// [PetSession] por mascota (todas vigiladas al mismo tiempo).
+class AppController extends ChangeNotifier implements PetSessionListener {
+  AppController({
+    required this.store,
+    required this.petRepository,
+    required this.trackerRepository,
+    required this.locationRepository,
+    required this.safeZoneRepository,
+    required this.alertRepository,
+    required this.contactRepository,
+    required this.walkRepository,
+    required this.activityRepository,
+    required this.healthRepository,
+    required this.aiService,
+    required this.collarFactory,
+    AlertSound? sound,
+    this.auth,
+    StorageMode? storageMode,
+  })  : sound = sound ?? SilentAlertSound(),
+        storageMode = storageMode ?? StorageMode();
+
+  /// Inicio de sesión de las cuentas reales (Supabase). null = sin conexión a Supabase.
+  final AuthService? auth;
+
+  /// Dónde se guardan los datos: demo -> dispositivo; cuentas reales -> Supabase.
+  final StorageMode storageMode;
+
+  /// ¿Los datos de este usuario se guardan en Supabase?
+  bool get usesCloud => storageMode.remote;
+
+  /// Alarma y timbre de la app.
+  final AlertSound sound;
+
+  final LocalStore store;
+  final PetRepository petRepository;
+  final TrackerRepository trackerRepository;
+  final LocationRepository locationRepository;
+  final SafeZoneRepository safeZoneRepository;
+  final AlertRepository alertRepository;
+  final ContactRepository contactRepository;
+  final WalkRepository walkRepository;
+  final ActivityRepository activityRepository;
+  final HealthRepository healthRepository;
+  final PetSafetyAiService aiService;
+  final CollarFactory collarFactory;
+
+  /// Cuenta demo: la única con collar simulado, datos de ejemplo y Modo prueba.
