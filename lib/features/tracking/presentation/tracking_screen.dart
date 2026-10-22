@@ -98,3 +98,123 @@ class _TrackingScreenState extends State<TrackingScreen> {
       // Marca que el mapa ya está listo para moverse.
       Builder(builder: (_) {
         if (!_ready) WidgetsBinding.instance.addPostFrameCallback((_) => mounted ? setState(() => _ready = true) : null);
+        return const SizedBox.shrink();
+      }),
+      // Título flotante
+      SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          child: Row(children: [
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: context.colors.surface.withValues(alpha: 0.95),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(children: [
+                  Expanded(child: Text(l.whereIs(pet.name), style: context.text.titleLarge, overflow: TextOverflow.ellipsis)),
+                  if (c.isDemo)
+                    StatusChip(label: l.t('GPS simulado', 'Simulated GPS'), icon: Icons.science_outlined, color: AppTheme.warning),
+                ]),
+              ),
+            ),
+            const SizedBox(width: 10),
+            _RoundButton(
+              icon: Icons.shield_rounded,
+              tooltip: l.t('Zonas seguras', 'Safe zones'),
+              onTap: () => Navigator.pushNamed(context, AppRoutes.zones),
+            ),
+          ]),
+        ),
+      ),
+      // Botón "mi ubicación" (punto azul)
+      Positioned(
+        right: 16,
+        bottom: petPos == null ? 230 : 280,
+        child: _locating
+            ? const SizedBox(width: 48, height: 48, child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator(strokeWidth: 3)))
+            : _RoundButton(
+                icon: Icons.person_pin_circle_rounded,
+                tooltip: c.ownerTracking ? l.t('Ocultar mi ubicación', 'Hide my location') : l.t('Mostrar mi ubicación', 'Show my location'),
+                active: c.ownerTracking,
+                activeColor: ownerBlue,
+                onTap: () => _toggleOwner(c),
+              ),
+      ),
+      // Botón "centrar en la mascota"
+      if (petPos != null)
+        Positioned(
+          right: 16,
+          bottom: 220,
+          child: _RoundButton(
+            icon: _follow ? Icons.my_location_rounded : Icons.location_searching_rounded,
+            tooltip: l.t('Centrar en ${pet.name}', 'Center on ${pet.name}'),
+            active: _follow,
+            onTap: () {
+              setState(() => _follow = true);
+              _map.move(petPos, 17);
+            },
+          ),
+        ),
+      // Panel inferior
+      Positioned(
+        left: 12,
+        right: 12,
+        bottom: 12,
+        child: Material(
+          color: context.colors.surface,
+          borderRadius: BorderRadius.circular(26),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
+            child: petPos == null
+                ? _WaitingPanel(petName: pet.name, ownerOn: c.ownerTracking, onOwner: () => _toggleOwner(c))
+                : _StatusPanel(distToOwner: distToOwner),
+          ),
+        ),
+      ),
+    ]);
+  }
+}
+
+/// Panel cuando el collar todavía no envía su ubicación (usuarios reales).
+class _WaitingPanel extends StatelessWidget {
+  const _WaitingPanel({required this.petName, required this.ownerOn, required this.onOwner});
+  final String petName;
+  final bool ownerOn;
+  final VoidCallback onOwner;
+  @override
+  Widget build(BuildContext context) {
+    final c = AppScope.of(context);
+    final l = AppL10n.fromLocale(c.locale);
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+      Row(children: [
+        Icon(Icons.sensors_off_rounded, color: context.colors.muted),
+        const SizedBox(width: 10),
+        Expanded(child: Text(l.t('Esperando la señal del collar', 'Waiting for the collar signal'), style: context.text.titleMedium)),
+      ]),
+      const SizedBox(height: 6),
+      Text(
+        l.t('Cuando el GPS de $petName envíe su primera ubicación, aparecerá aquí en el mapa.',
+            "When $petName's GPS sends its first location, it will show up here on the map."),
+        style: context.text.bodySmall,
+      ),
+      const SizedBox(height: 10),
+      Wrap(spacing: 8, runSpacing: 8, children: [
+        if (!ownerOn)
+          FilledButton.icon(
+            style: FilledButton.styleFrom(backgroundColor: ownerBlue, minimumSize: const Size(0, 42)),
+            onPressed: onOwner,
+            icon: const Icon(Icons.person_pin_circle_rounded, size: 18),
+            label: Text(l.t('Mostrar mi ubicación', 'Show my location')),
+          ),
+        OutlinedButton.icon(
+          style: OutlinedButton.styleFrom(minimumSize: const Size(0, 42)),
+          onPressed: () => Navigator.pushNamed(context, AppRoutes.collar),
+          icon: const Icon(Icons.sensors_rounded, size: 18),
+          label: Text(l.t('Mi collar', 'My collar')),
+        ),
+      ]),
+    ]);
+  }
+}
