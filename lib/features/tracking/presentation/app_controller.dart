@@ -78,3 +78,83 @@ class AppController extends ChangeNotifier implements PetSessionListener {
   final CollarFactory collarFactory;
 
   /// Cuenta demo: la única con collar simulado, datos de ejemplo y Modo prueba.
+  static const demoEmail = 'demo@pettracker.app';
+  static const demoPassword = 'demo1234';
+
+  User? user;
+  List<Pet> pets = [];
+
+  // ── Ubicación del dueño (punto azul) ──────────────────────────────────────
+  LatLng? ownerPosition;
+  double? ownerAccuracy;
+  StreamSubscription<OwnerFix>? _ownerSub;
+  bool get ownerTracking => _ownerSub != null;
+  bool _relocating = false;
+
+  /// ¿Es la cuenta demo?
+  bool get isDemo => user?.email.toLowerCase() == demoEmail;
+
+  /// Identificador del espacio de datos de cada usuario (según su correo).
+  static String userIdFor(String email) => email.trim().toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '_');
+  final Map<String, PetSession> sessions = {};
+  String? _selectedId;
+
+  // Configuración (se guarda en el dispositivo)
+  bool notifyZone = true, notifyBattery = true, metric = true;
+  int intervalSeconds = 3;
+  String locale = 'es';
+  ThemeMode themeMode = ThemeMode.system;
+  String ownerPhone = '';
+  bool onboarded = false;
+  /// Sonar la alarma con las alertas importantes.
+  bool soundEnabled = true;
+
+  /// Sube en 1 cada vez que una mascota vuelve a casa tras una emergencia (para celebrar).
+  int celebrateTick = 0;
+  String celebratePetName = '';
+
+  // ── Arranque ──────────────────────────────────────────────────────────────
+
+  /// Carga la configuración y, si había sesión abierta, la recupera.
+  Future<void> init() async {
+    final s = store.readGlobal('settings');
+    if (s is Map) {
+      notifyZone = s['notifyZone'] ?? true;
+      notifyBattery = s['notifyBattery'] ?? true;
+      metric = s['metric'] ?? true;
+      intervalSeconds = (s['interval'] as num?)?.toInt() ?? 3;
+      locale = s['locale'] ?? 'es';
+      themeMode = ThemeMode.values.firstWhere((m) => m.name == s['theme'], orElse: () => ThemeMode.system);
+      ownerPhone = s['ownerPhone'] ?? '';
+      soundEnabled = s['sound'] ?? true;
+    }
+    onboarded = store.getGlobalBool('onboarded') ?? false;
+    final u = store.readGlobal('user');
+    if (u is Map) {
+      final email = (u['email'] as String).toLowerCase();
+      final demo = email == demoEmail;
+      // Cuenta real: solo se recupera si Supabase todavía tiene la sesión abierta.
+      if (!demo && auth != null && auth!.currentEmail?.toLowerCase() != email) {
+        await store.removeGlobal('user');
+      } else {
+        user = User(id: userIdFor(email), email: email, name: u['name']);
+        storageMode.remote = !demo && auth != null;
+        store.setScope(user!.id);
+        try {
+          await _loadPets();
+        } catch (e) {
+          debugPrint('[Datos] No se pudieron cargar las mascotas: $e');
+        }
+      }
+    }
+    notifyListeners();
+  }
+
+  Future<void> _saveSettings() => store.writeGlobal('settings', {
+        'notifyZone': notifyZone, 'notifyBattery': notifyBattery, 'metric': metric,
+        'interval': intervalSeconds, 'locale': locale, 'theme': themeMode.name, 'ownerPhone': ownerPhone,
+        'sound': soundEnabled,
+      });
+
+  void setSoundEnabled(bool on) {
+    soundEnabled = on;
