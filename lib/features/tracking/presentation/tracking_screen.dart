@@ -218,3 +218,99 @@ class _WaitingPanel extends StatelessWidget {
     ]);
   }
 }
+
+/// Panel con el estado de la mascota.
+class _StatusPanel extends StatelessWidget {
+  const _StatusPanel({required this.distToOwner});
+  final double? distToOwner;
+  @override
+  Widget build(BuildContext context) {
+    final c = AppScope.of(context);
+    final l = AppL10n.fromLocale(c.locale);
+    final s = c.session!, t = c.tracker!, loc = c.current!, pet = c.selectedPet!;
+    final outside = t.isConnected && !c.insideZone && c.activeWalk == null;
+    final d = c.distanceFromCenter ?? 0;
+    final zoneNow = s.currentZone;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+      Row(children: [
+        Expanded(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            layoutBuilder: (cur, prev) => Stack(alignment: Alignment.centerLeft, children: [...prev, ?cur]),
+            child: Text(
+              l.awayFromHome(Fmt.distance(d, c.metric)),
+              key: ValueKey(Fmt.distance(d, c.metric)),
+              style: context.text.headlineSmall?.copyWith(color: outside ? AppTheme.danger : null),
+            ),
+          ),
+        ),
+        if (c.activeWalk != null)
+          StatusChip(label: l.t('Paseando', 'Walking'), icon: Icons.directions_walk_rounded, color: pet.color),
+      ]),
+      const SizedBox(height: 8),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: StatusChip(
+          label: !t.isConnected
+              ? l.trackingPaused
+              : zoneNow != null
+                  ? l.inZoneShort(zoneNow.name)
+                  : l.outsideZoneByMsg(Fmt.distance(s.metersOutside, c.metric)),
+          icon: !t.isConnected
+              ? Icons.pause_circle_outline_rounded
+              : zoneNow != null
+                  ? Icons.verified_rounded
+                  : Icons.warning_rounded,
+          color: !t.isConnected ? context.colors.muted : (zoneNow != null ? pet.color : AppTheme.danger),
+        ),
+      ),
+      const SizedBox(height: 10),
+      Wrap(spacing: 16, runSpacing: 4, children: [
+        if (distToOwner != null)
+          _Meta(
+            icon: Icons.person_pin_circle_rounded,
+            color: ownerBlue,
+            text: l.t('A ${Fmt.distance(distToOwner!, c.metric)} de ti', '${Fmt.distance(distToOwner!, c.metric)} from you'),
+          ),
+        _Meta(icon: Icons.schedule_rounded, text: Fmt.time(t.lastUpdate)),
+        _Meta(icon: Icons.my_location_rounded, text: '±${loc.accuracy.round()} m'),
+        _Meta(icon: Icons.battery_5_bar_rounded, text: '${t.batteryLevel}%'),
+      ]),
+    ]);
+  }
+}
+
+class _Meta extends StatelessWidget {
+  const _Meta({required this.icon, required this.text, this.color});
+  final IconData icon;
+  final String text;
+  final Color? color;
+  @override
+  Widget build(BuildContext context) => Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 16, color: color ?? context.colors.muted),
+        const SizedBox(width: 4),
+        Text(text, style: context.text.bodySmall?.copyWith(color: color, fontWeight: color == null ? null : FontWeight.w700)),
+      ]);
+}
+
+class _RoundButton extends StatelessWidget {
+  const _RoundButton({required this.icon, required this.tooltip, required this.onTap, this.active = false, this.activeColor});
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+  final bool active;
+  final Color? activeColor;
+  @override
+  Widget build(BuildContext context) => Tooltip(
+        message: tooltip,
+        child: Material(
+          color: active ? (activeColor ?? context.accent) : context.colors.surface,
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: onTap,
+            child: SizedBox(width: 48, height: 48, child: Icon(icon, color: active ? Colors.white : context.colors.ink)),
+          ),
+        ),
+      );
+}
