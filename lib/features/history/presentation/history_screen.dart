@@ -33,3 +33,31 @@ class HistoryScreen extends StatelessWidget {
                         Expanded(child: Container(width: 2, color: i == 0 ? Colors.transparent : context.colors.line)),
                         Container(
                           width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                        ),
+                        Expanded(
+                            child: Container(
+                                width: 2, color: i == h.length - 1 ? Colors.transparent : context.colors.line)),
+                      ]),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text(ok ? l.insideZoneMsg : l.outsideZone,
+                              style: TextStyle(fontWeight: FontWeight.w700, color: ok ? context.colors.ink : AppTheme.danger)),
+                          Text(
+                              '${Fmt.time(loc.timestamp)}   ${loc.latitude.toStringAsFixed(5)}, ${loc.longitude.toStringAsFixed(5)}',
+                              style: text.bodySmall),
+                        ]),
+                      ),
+                    ),
+                  ]),
+                );
+              },
+            ),
+    );
+  }
+}
