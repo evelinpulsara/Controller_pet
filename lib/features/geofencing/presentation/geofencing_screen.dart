@@ -98,3 +98,144 @@ class GeofencingScreen extends StatelessWidget {
                 ]),
               ),
               if (inZone?.id == z.id)
+                StatusChip(label: l.t('Está aquí', 'Here now'), icon: Icons.pets_rounded, color: context.accent),
+              Icon(Icons.chevron_right_rounded, color: context.colors.muted),
+            ]),
+          ),
+      ]),
+    );
+  }
+}
+
+/// Crear o editar una zona: toca el mapa para mover el centro.
+class ZoneEditor extends StatefulWidget {
+  const ZoneEditor({super.key, this.zone});
+  final SafeZone? zone;
+  @override
+  State<ZoneEditor> createState() => _ZoneEditorState();
+}
+
+class _ZoneEditorState extends State<ZoneEditor> {
+  late final _name = TextEditingController(text: widget.zone?.name ?? '');
+  late double _radius = widget.zone?.radius ?? 120;
+  late bool _enabled = widget.zone?.isEnabled ?? true;
+  LatLng? _center;
+  final _map = MapController();
+  LatLng? _owner;
+  double? _ownerAcc;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_center != null) return;
+    final c = AppScope.of(context);
+    final z = widget.zone;
+    if (z != null) {
+      _center = LatLng(z.latitude, z.longitude);
+    } else if (c.current != null) {
+      _center = ll(c.current!);
+    } else if (c.zone != null) {
+      _center = LatLng(c.zone!.latitude, c.zone!.longitude);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppScope.of(context);
+    final l = AppL10n.fromLocale(c.locale);
+    final center = _center!;
+    final isNew = widget.zone == null;
+    final draft = SafeZone(
+        id: widget.zone?.id ?? 'draft', name: _name.text, latitude: center.latitude, longitude: center.longitude,
+        radius: _radius, isEnabled: _enabled);
+    final others = c.zones.where((z) => z.id != widget.zone?.id).toList();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(isNew ? l.t('Nueva zona', 'New zone') : l.t('Editar zona', 'Edit zone')),
+        actions: [
+          if (!isNew)
+            IconButton(
+              tooltip: l.delete,
+              icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.danger),
+              onPressed: () async {
+                await c.deleteZone(widget.zone!.id);
+                if (context.mounted) Navigator.pop(context);
+              },
+            ),
+        ],
+      ),
+      body: ListView(padding: const EdgeInsets.fromLTRB(20, 8, 20, 24), children: [
+        UseMyLocationCard(
+          onLocated: (p, acc) {
+            setState(() {
+              _center = p;
+              _owner = p;
+              _ownerAcc = acc;
+            });
+            _map.move(p, zoomFor(_radius * 2.5));
+          },
+        ),
+        const SizedBox(height: 12),
+        Text(l.t('O toca el mapa para poner el centro de la zona.', 'Or tap the map to set the center of the zone.'),
+            style: context.text.bodyMedium?.copyWith(color: context.colors.muted)),
+        const SizedBox(height: 12),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: SizedBox(
+            height: 320,
+            child: PetMap(
+              controller: _map,
+              center: center,
+              zoom: zoomFor(_radius * 2.5),
+              owner: _owner,
+              ownerAccuracy: _ownerAcc,
+              zones: [draft, ...others],
+              highlightZoneId: draft.id,
+              pet: c.selectedPet,
+              petPosition: c.current == null ? null : ll(c.current!),
+              onTap: (p) => setState(() => _center = p),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _name,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: InputDecoration(
+              labelText: l.zoneName, hintText: l.t('Ej: Parque, Casa de la abuela', 'E.g. Park, Grandma\'s house')),
+          onChanged: (_) => setState(() {}),
+        ),
+        const SizedBox(height: 16),
+        Text(l.radiusLabel(Fmt.distance(_radius, c.metric)), style: context.text.titleMedium),
+        Slider(value: _radius, min: 30, max: 1000, onChanged: (v) => setState(() => _radius = v)),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(l.zoneEnabled),
+          value: _enabled,
+          onChanged: (v) => setState(() => _enabled = v),
+        ),
+        const SizedBox(height: 8),
+        FilledButton.icon(
+          icon: const Icon(Icons.check_rounded),
+          label: Text(l.saveZone),
+          onPressed: _name.text.trim().isEmpty
+              ? null
+              : () async {
+                  await c.saveZone(SafeZone(
+                    id: widget.zone?.id ?? newId(),
+                    name: _name.text.trim(),
+                    latitude: center.latitude,
+                    longitude: center.longitude,
+                    radius: _radius,
+                    isEnabled: _enabled,
+                  ));
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l.zoneSaved)));
+                  Navigator.pop(context);
+                },
+        ),
+      ]),
+    );
+  }
+}
