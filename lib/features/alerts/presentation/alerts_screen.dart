@@ -38,3 +38,40 @@ class AlertsScreen extends StatelessWidget {
                         width: 42,
                         height: 42,
                         decoration: BoxDecoration(
+                            color: _color(context, a.type).withValues(alpha: 0.14), shape: BoxShape.circle),
+                        child: Icon(_icon(a.type), color: _color(context, a.type), size: 22),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          if (a.type == AlertType.anomaly)
+                            Text(l.t('Comportamiento inusual', 'Unusual behavior'),
+                                style: context.text.bodySmall?.copyWith(color: AppTheme.warning, fontWeight: FontWeight.w800)),
+                          Text(l.alertMessage(a.type, a.params), style: const TextStyle(fontWeight: FontWeight.w700)),
+                          const SizedBox(height: 2),
+                          Text('${Fmt.date(a.timestamp)}  ${Fmt.time(a.timestamp)}', style: context.text.bodySmall),
+                        ]),
+                      ),
+                    ]),
+                  ),
+                ),
+            ]),
+    );
+  }
+
+  IconData _icon(AlertType t) => switch (t) {
+        AlertType.leftSafeZone => Icons.wrong_location_rounded,
+        AlertType.enteredSafeZone => Icons.home_rounded,
+        AlertType.lowBattery => Icons.battery_alert_rounded,
+        AlertType.gpsLost => Icons.gps_off_rounded,
+        AlertType.trackerDisconnected => Icons.link_off_rounded,
+        AlertType.anomaly => Icons.psychology_alt_rounded,
+        AlertType.healthReminder => Icons.event_rounded,
+      };
+
+  Color _color(BuildContext context, AlertType t) => switch (t) {
+        AlertType.leftSafeZone || AlertType.trackerDisconnected => AppTheme.danger,
+        AlertType.enteredSafeZone => context.accent,
+        _ => AppTheme.warning,
+      };
+}
