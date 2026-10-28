@@ -88,3 +88,32 @@ Future<EmergencyContact?> showContactForm(BuildContext context, {required String
               const SizedBox(height: 8),
               Text(error!, style: const TextStyle(color: AppTheme.danger)),
             ],
+          ]),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l.cancel)),
+          FilledButton(
+            onPressed: () {
+              final digits = phone.text.replaceAll(RegExp(r'[^0-9]'), '');
+              if (name.text.trim().isEmpty || digits.length < 10) {
+                setState(() => error = l.contactError);
+                return;
+              }
+              Navigator.pop(
+                ctx,
+                EmergencyContact(
+                  id: newId(),
+                  petId: petId,
+                  fullName: name.text.trim(),
+                  phone: phone.text.trim(),
+                  relationship: relation.text.trim().isEmpty ? null : relation.text.trim(),
+                ),
+              );
+            },
+            child: Text(l.save),
+          ),
+        ],
+      ),
+    ),
+  );
+}
