@@ -68,3 +68,61 @@ class PerfMonitor extends ChangeNotifier {
   }
 
   List<InteractionSample> get interactions =>
+      _interactions.values.toList()..sort((a, b) => b.at.compareTo(a.at));
+
+  /// INP: la peor interacción (o el percentil 98 si hay 50 o más).
+  InteractionSample? get inpSample {
+    if (_interactions.isEmpty) return null;
+    final sorted = _interactions.values.toList()..sort((a, b) => b.total.compareTo(a.total));
+    final skip = sorted.length >= 50 ? sorted.length ~/ 50 : 0;
+    return sorted[min(skip, sorted.length - 1)];
+  }
+
+  double? get inp => inpSample?.total;
+
+  static String rating(double? ms) => ms == null
+      ? '—'
+      : ms <= 200
+          ? 'good'
+          : ms <= 500
+              ? 'needs'
+              : 'poor';
+
+  double get uiAvg => _uiMs.isEmpty ? 0 : _uiMs.reduce((a, b) => a + b) / _uiMs.length;
+  double get uiMax => _uiMs.isEmpty ? 0 : _uiMs.reduce(max);
+  double get rasterAvg => _rasterMs.isEmpty ? 0 : _rasterMs.reduce((a, b) => a + b) / _rasterMs.length;
+  double get rasterMax => _rasterMs.isEmpty ? 0 : _rasterMs.reduce(max);
+  int get framesMeasured => _uiMs.length;
+
+  bool get isWeb => kIsWeb;
+  bool get crossOriginIsolated => platform.browserCrossOriginIsolated;
+  bool get sharedArrayBufferAvailable => platform.browserSharedArrayBufferAvailable;
+  LoadTimings? get loadTimings => platform.browserLoadTimings();
+  Future<ServiceWorkerInfo> serviceWorkerInfo() => platform.browserServiceWorkerInfo();
+
+  /// Bloquea el hilo principal [ms] milisegundos (para ver cómo empeora el INP).
+  void blockMainThread(int ms) => platform.busyWait(ms);
+
+  void reset() {
+    _interactions.clear();
+    _uiMs.clear();
+    _rasterMs.clear();
+    longTasks = 0;
+    longestTaskMs = 0;
+    notifyListeners();
+  }
+}
+
+/// Demostración del Event Loop: en qué orden se ejecuta el código.
+/// Código síncrono (Call Stack) -> Microtasks -> Tasks (Macrotasks).
+Future<List<String>> eventLoopDemo(bool es) async {
+  final log = <String>[];
+  log.add(es ? 'Código síncrono #1 (Call Stack)' : 'Synchronous code #1 (Call Stack)');
+  Timer.run(() => log.add(es ? 'Task / Macrotask (Timer, como setTimeout)' : 'Task / Macrotask (Timer, like setTimeout)'));
+  Future(() => log.add(es ? 'Task / Macrotask (Future)' : 'Task / Macrotask (Future)'));
+  scheduleMicrotask(() => log.add(es ? 'Microtask (scheduleMicrotask, como Promise.then)' : 'Microtask (like Promise.then)'));
+  Future.microtask(() => log.add(es ? 'Microtask (Future.microtask)' : 'Microtask (Future.microtask)'));
+  log.add(es ? 'Código síncrono #2 (Call Stack)' : 'Synchronous code #2 (Call Stack)');
+  await Future.delayed(const Duration(milliseconds: 30));
+  return log;
+}
