@@ -198,3 +198,103 @@ class SupabaseAlertRepository implements AlertRepository {
 class SupabaseLocationRepository implements LocationRepository {
   SupabaseLocationRepository(this._db);
   final SupabaseClient _db;
+
+  @override
+  Future<List<LocationHistory>> getHistory(String petId) async {
+    final rows =
+        await _db.from('location_history').select().eq('pet_id', petId).order('recorded_at', ascending: false).limit(300);
+    final out = <LocationHistory>[];
+    for (final r in rows) {
+      final l = parseCollarLocation(r); // datos de afuera: se validan antes de usarlos
+      if (l == null) continue;
+      out.add(LocationHistory(
+        id: '${r['id']}',
+        petId: r['pet_id'],
+        status: 'Inside safe zone', // la pantalla lo calcula con las zonas
+        location: l,
+      ));
+    }
+    return out;
+  }
+
+  /// Las ubicaciones reales las guarda el collar (función report_location),
+  /// así que la app no las vuelve a escribir.
+  @override
+  Future<void> addLocation(LocationHistory entry) async {}
+}
+
+class SupabaseContactRepository implements ContactRepository {
+  SupabaseContactRepository(this._db);
+  final SupabaseClient _db;
+
+  @override
+  Future<List<EmergencyContact>> getContacts(String petId) async {
+    final rows = await _db.from('emergency_contacts').select().eq('pet_id', petId).order('created_at');
+    return [
+      for (final r in rows)
+        EmergencyContact(
+            id: r['id'], petId: r['pet_id'], fullName: r['full_name'], phone: r['phone'], relationship: r['relationship']),
+    ];
+  }
+
+  @override
+  Future<void> addContact(EmergencyContact c) => _db.from('emergency_contacts').insert({
+        'id': c.id,
+        'pet_id': c.petId,
+        'full_name': c.fullName,
+        'phone': c.phone,
+        'relationship': c.relationship,
+      });
+
+  @override
+  Future<void> deleteContact(String id) => _db.from('emergency_contacts').delete().eq('id', id);
+}
+
+class SupabaseWalkRepository implements WalkRepository {
+  SupabaseWalkRepository(this._db);
+  final SupabaseClient _db;
+
+  @override
+  Future<List<Walk>> getWalks(String petId) async {
+    final rows = await _db.from('walks').select().eq('pet_id', petId).order('started_at', ascending: false).limit(50);
+    return [
+      for (final r in rows)
+        Walk(
+          id: r['id'],
+          petId: r['pet_id'],
+          start: _t(r['started_at']),
+          end: r['ended_at'] == null ? null : _t(r['ended_at']),
+          points: [for (final p in (r['route'] as List? ?? [])) LocationData.fromJson(Map<String, dynamic>.from(p))],
+        ),
+    ];
+  }
+
+  @override
+  Future<void> saveWalk(Walk w) => _db.from('walks').upsert({
+        'id': w.id,
+        'pet_id': w.petId,
+        'started_at': w.start.toUtc().toIso8601String(),
+        'ended_at': w.end?.toUtc().toIso8601String(),
+        'distance_m': w.distanceMeters,
+        'route': [for (final p in w.points) p.toJson()],
+      });
+
+  @override
+  Future<void> deleteWalk(String id) => _db.from('walks').delete().eq('id', id);
+}
+
+class SupabaseActivityRepository implements ActivityRepository {
+  SupabaseActivityRepository(this._db);
+  final SupabaseClient _db;
+
+  @override
+  Future<List<DailyActivity>> getActivity(String petId) async {
+    final since = _date(DateTime.now().subtract(const Duration(days: 60)));
+    final rows = await _db.from('daily_activity').select().eq('pet_id', petId).gte('day', since).order('day');
+    return [
+      for (final r in rows)
+        DailyActivity(
+          petId: r['pet_id'],
+          day: r['day'],
+          distanceMeters: _d(r['distance_m']),
+          activeSeconds: _i(r['active_seconds']) ?? 0,
