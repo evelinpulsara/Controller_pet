@@ -98,3 +98,103 @@ class SupabaseTrackerRepository implements TrackerRepository {
     if (r == null) {
       return TrackerDevice(id: trackerId, batteryLevel: 0, isConnected: false, lastUpdate: DateTime.fromMillisecondsSinceEpoch(0));
     }
+    return TrackerDevice(
+      id: trackerId,
+      batteryLevel: _i(r['battery_level']) ?? 0,
+      isConnected: r['is_online'] ?? false,
+      lastUpdate: r['last_seen_at'] == null ? DateTime.fromMillisecondsSinceEpoch(0) : _t(r['last_seen_at']),
+      powerSave: r['power_save'] ?? false,
+      signal: _i(r['signal']) ?? 0,
+    );
+  }
+
+  /// La app solo cambia lo que el dueño decide (modo ahorro). La batería y la
+  /// conexión las escribe el collar real al enviar su ubicación.
+  @override
+  Future<void> saveTracker(TrackerDevice t) =>
+      _db.from('tracker_devices').update({'power_save': t.powerSave}).eq('device_uid', t.id);
+
+  /// El dueño le pone una clave secreta al collar (para que pueda enviar ubicaciones).
+  Future<void> setDeviceKey(String deviceUid, String key) =>
+      _db.rpc('set_device_key', params: {'p_device_uid': deviceUid, 'p_key': key});
+}
+
+class SupabaseSafeZoneRepository implements SafeZoneRepository {
+  SupabaseSafeZoneRepository(this._db);
+  final SupabaseClient _db;
+
+  @override
+  Future<List<SafeZone>> getZones(String petId) async {
+    final rows =
+        await _db.from('safe_zones').select().eq('pet_id', petId).order('is_home', ascending: false).order('created_at');
+    return [
+      for (final r in rows)
+        SafeZone(
+          id: r['id'],
+          petId: r['pet_id'],
+          name: r['name'],
+          latitude: _d(r['center_lat']),
+          longitude: _d(r['center_lon']),
+          radius: _d(r['radius_m'], 100),
+          isEnabled: r['is_active'] ?? true,
+        ),
+    ];
+  }
+
+  @override
+  Future<void> saveZone(SafeZone z) async {
+    final existing = await _db.from('safe_zones').select('id').eq('pet_id', z.petId).limit(1);
+    await _db.from('safe_zones').upsert({
+      'id': z.id,
+      'pet_id': z.petId,
+      'name': z.name,
+      'center_lat': z.latitude,
+      'center_lon': z.longitude,
+      'radius_m': z.radius.clamp(10, 50000),
+      'is_active': z.isEnabled,
+      // La primera zona de la mascota es su "Casa".
+      if (existing.isEmpty || existing.first['id'] == z.id) 'is_home': true,
+    });
+  }
+
+  @override
+  Future<void> deleteZone(String id) => _db.from('safe_zones').delete().eq('id', id);
+}
+
+class SupabaseAlertRepository implements AlertRepository {
+  SupabaseAlertRepository(this._db);
+  final SupabaseClient _db;
+
+  @override
+  Future<List<PetAlert>> getAlerts(String petId) async {
+    final rows = await _db.from('alerts').select().eq('pet_id', petId).order('created_at', ascending: false).limit(100);
+    return [
+      for (final r in rows)
+        PetAlert(
+          id: r['id'],
+          petId: r['pet_id'],
+          type: AlertType.values.firstWhere((t) => t.name == r['alert_type'], orElse: () => AlertType.anomaly),
+          message: r['message'] ?? '',
+          timestamp: _t(r['created_at']),
+          params: Map<String, String>.from((r['params'] as Map?)?.map((k, v) => MapEntry('$k', '$v')) ?? {}),
+        ),
+    ];
+  }
+
+  @override
+  Future<void> addAlert(PetAlert a) => _db.from('alerts').insert({
+        'id': a.id,
+        'pet_id': a.petId,
+        'alert_type': a.type.name,
+        'params': a.params,
+        'message': a.message,
+        'created_at': a.timestamp.toUtc().toIso8601String(),
+      });
+
+  @override
+  Future<void> clear(String petId) => _db.from('alerts').delete().eq('pet_id', petId);
+}
+
+class SupabaseLocationRepository implements LocationRepository {
+  SupabaseLocationRepository(this._db);
+  final SupabaseClient _db;
