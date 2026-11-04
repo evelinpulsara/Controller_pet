@@ -298,3 +298,51 @@ class SupabaseActivityRepository implements ActivityRepository {
           day: r['day'],
           distanceMeters: _d(r['distance_m']),
           activeSeconds: _i(r['active_seconds']) ?? 0,
+        ),
+    ];
+  }
+
+  @override
+  Future<void> saveDay(DailyActivity d) => _db.from('daily_activity').upsert({
+        'pet_id': d.petId,
+        'day': d.day,
+        'distance_m': d.distanceMeters,
+        'active_seconds': d.activeSeconds,
+      }, onConflict: 'pet_id,day');
+}
+
+class SupabaseHealthRepository implements HealthRepository {
+  SupabaseHealthRepository(this._db);
+  final SupabaseClient _db;
+
+  @override
+  Future<List<HealthRecord>> getRecords(String petId) async {
+    final rows = await _db.from('health_records').select().eq('pet_id', petId).order('record_date', ascending: false);
+    return [
+      for (final r in rows)
+        HealthRecord(
+          id: r['id'],
+          petId: r['pet_id'],
+          type: HealthType.values.firstWhere((t) => t.name == r['record_type'], orElse: () => HealthType.vet),
+          title: r['title'],
+          date: DateTime.parse(r['record_date']),
+          nextDue: r['next_due_date'] == null ? null : DateTime.parse(r['next_due_date']),
+          notes: r['notes'] ?? '',
+        ),
+    ];
+  }
+
+  @override
+  Future<void> saveRecord(HealthRecord r) => _db.from('health_records').upsert({
+        'id': r.id,
+        'pet_id': r.petId,
+        'record_type': r.type.name,
+        'title': r.title,
+        'record_date': _date(r.date),
+        'next_due_date': r.nextDue == null ? null : _date(r.nextDue!),
+        'notes': r.notes,
+      });
+
+  @override
+  Future<void> deleteRecord(String id) => _db.from('health_records').delete().eq('id', id);
+}
