@@ -78,3 +78,68 @@ class SwitchingLocationRepository implements LocationRepository {
   final LocationRepository local;
   final LocationRepository? remote;
   LocationRepository get _r => mode.remote && remote != null ? remote! : local;
+  @override
+  Future<List<LocationHistory>> getHistory(String petId) => _r.getHistory(petId);
+  @override
+  Future<void> addLocation(LocationHistory entry) => _r.addLocation(entry);
+  /// Limpia la memoria intermedia del repositorio local.
+  void clearCache() {
+    try {
+      (local as dynamic).clearCache();
+    } catch (_) {}
+  }
+}
+
+class SwitchingContactRepository implements ContactRepository {
+  SwitchingContactRepository(this.mode, this.local, this.remote);
+  final StorageMode mode;
+  final ContactRepository local;
+  final ContactRepository? remote;
+  ContactRepository get _r => mode.remote && remote != null ? remote! : local;
+  @override
+  Future<List<EmergencyContact>> getContacts(String petId) => _r.getContacts(petId);
+  @override
+  Future<void> addContact(EmergencyContact contact) => _r.addContact(contact);
+  @override
+  Future<void> deleteContact(String id) => _r.deleteContact(id);
+}
+
+class SwitchingWalkRepository implements WalkRepository {
+  SwitchingWalkRepository(this.mode, this.local, this.remote);
+  final StorageMode mode;
+  final WalkRepository local;
+  final WalkRepository? remote;
+  WalkRepository get _r => mode.remote && remote != null ? remote! : local;
+  @override
+  Future<List<Walk>> getWalks(String petId) => _r.getWalks(petId);
+  @override
+  Future<void> saveWalk(Walk walk) => _r.saveWalk(walk);
+  @override
+  Future<void> deleteWalk(String id) => _r.deleteWalk(id);
+}
+
+class SwitchingActivityRepository implements ActivityRepository {
+  SwitchingActivityRepository(this.mode, this.local, this.remote);
+  final StorageMode mode;
+  final ActivityRepository local;
+  final ActivityRepository? remote;
+  ActivityRepository get _r => mode.remote && remote != null ? remote! : local;
+  @override
+  Future<List<DailyActivity>> getActivity(String petId) => _r.getActivity(petId);
+  @override
+  Future<void> saveDay(DailyActivity day) => _r.saveDay(day);
+}
+
+class SwitchingHealthRepository implements HealthRepository {
+  SwitchingHealthRepository(this.mode, this.local, this.remote);
+  final StorageMode mode;
+  final HealthRepository local;
+  final HealthRepository? remote;
+  HealthRepository get _r => mode.remote && remote != null ? remote! : local;
+  @override
+  Future<List<HealthRecord>> getRecords(String petId) => _r.getRecords(petId);
+  @override
+  Future<void> saveRecord(HealthRecord record) => _r.saveRecord(record);
+  @override
+  Future<void> deleteRecord(String id) => _r.deleteRecord(id);
+}
