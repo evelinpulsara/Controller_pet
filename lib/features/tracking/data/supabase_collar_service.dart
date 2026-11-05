@@ -78,3 +78,57 @@ class SupabaseCollarService extends LocationService {
             table: 'location_history',
             filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'pet_id', value: petId),
             callback: (payload) {
+              final l = parseCollarLocation(payload.newRecord);
+              if (l != null) _emit(l);
+            },
+          )
+          .subscribe((status, [error]) {
+        transport.value =
+            status == RealtimeSubscribeStatus.subscribed ? CollarTransport.websocket : CollarTransport.polling;
+        _restartTimer();
+      });
+    } catch (_) {
+      transport.value = CollarTransport.polling;
+    }
+  }
+
+  @override
+  void setInterval(Duration d) {
+    _pollEvery = d < const Duration(seconds: 3) ? const Duration(seconds: 3) : d;
+    if (_started) _restartTimer();
+  }
+
+  void _restartTimer() {
+    _timer?.cancel();
+    // Con WebSocket solo hace falta una revisión de respaldo de vez en cuando.
+    final every = transport.value == CollarTransport.websocket ? const Duration(seconds: 30) : _pollEvery;
+    _timer = Timer.periodic(every, (_) => _poll());
+  }
+
+  Future<void> _poll() async {
+    if (_busy || _ctrl.isClosed) return;
+    _busy = true;
+    try {
+      var q = _db.from('location_history').select().eq('pet_id', petId);
+      if (_last != null) q = q.gt('recorded_at', _last!.toUtc().toIso8601String());
+      final rows = await q.order('recorded_at').limit(50);
+      for (final r in rows) {
+        final l = parseCollarLocation(r);
+        if (l != null) _emit(l);
+      }
+    } catch (_) {
+      // Sin internet: se vuelve a intentar en la próxima vuelta.
+    } finally {
+      _busy = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    final ch = _channel;
+    if (ch != null) _db.removeChannel(ch);
+    _ctrl.close();
+    transport.dispose();
+  }
+}
