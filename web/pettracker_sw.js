@@ -33,3 +33,36 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
 
+  // Calles del mapa: primero la caché (rápido y sin internet); si no está, la red.
+  if (url.hostname === 'tile.openstreetmap.org') {
+    event.respondWith(cacheFirst(req, TILE_CACHE, true));
+    return;
+  }
+  // Sonidos de alarma
+  if (url.origin === self.location.origin && url.pathname.includes('/sounds/')) {
+    event.respondWith(cacheFirst(req, ASSET_CACHE, false));
+  }
+  // Todo lo demás (la app, Supabase, Gemini) va directo a la red, sin tocarlo.
+});
+
+async function cacheFirst(req, cacheName, limit) {
+  const cache = await caches.open(cacheName);
+  const hit = await cache.match(req);
+  if (hit) return hit;
+  try {
+    const res = await fetch(req);
+    if (res.ok || res.type === 'opaque') {
+      await cache.put(req, res.clone());
+      if (limit) trim(cache);
+    }
+    return res;
+  } catch (e) {
+    return hit || Response.error();
+  }
+}
+
+// Mantiene la caché del mapa por debajo de MAX_TILES (borra las más viejas).
+async function trim(cache) {
+  const keys = await cache.keys();
+  for (let i = 0; i < keys.length - MAX_TILES; i++) await cache.delete(keys[i]);
+}
