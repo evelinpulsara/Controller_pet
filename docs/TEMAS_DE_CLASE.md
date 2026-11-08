@@ -78,3 +78,27 @@ La app combina varios paradigmas, cada uno donde conviene:
 
 **WebSockets**
 - Las ubicaciones del collar llegan por **Supabase Realtime**: un WebSocket persistente y bidireccional.
+- La base de datos empuja cada ubicación nueva al instante.
+- Solo se publica la tabla `pettracker.location_history`, y las reglas RLS se aplican también aquí, así que cada dueño recibe solo lo suyo.
+- **Código:** `lib/features/tracking/data/supabase_collar_service.dart`.
+
+**Short Polling como respaldo**
+- Si el WebSocket no está disponible, la app pregunta cada 5 s.
+- Aunque el WebSocket funcione, hace una consulta de respaldo cada 30 s por si se perdió un mensaje.
+- El panel muestra cuál se está usando.
+
+**SSE (Server-Sent Events)**
+- El resumen del día de la IA usa `streamGenerateContent?alt=sse` de Gemini: un flujo `text/event-stream` unidireccional.
+- La app muestra el texto mientras llega, sin esperar la respuesta completa.
+- **Código:** `lib/features/assistant/gemini_pet_safety_ai_service.dart`.
+
+---
+
+### Cómo mostrarlo en clase
+1. Corre la app con `flutter run -d chrome --dart-define-from-file=secrets.json` y entra con **"Probar con la cuenta demo"**.
+2. Ve a **Ajustes → Panel técnico**:
+   - "Bloquear el hilo" muestra el INP empeorando.
+   - "En el hilo principal" contra "Con Web Worker" muestra la diferencia entre bloquear y no bloquear.
+   - "Ejecutar demostración" muestra el orden del Event Loop.
+3. En **Inicio → Resumen del día → Ver resumen**, el texto aparece por partes (SSE).
+4. Para ver el Service Worker: abre el **Mapa**, desconecta el internet y recarga. Las calles ya vistas siguen apareciendo.
