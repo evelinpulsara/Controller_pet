@@ -38,3 +38,43 @@ La app combina varios paradigmas, cada uno donde conviene:
 
 - **Contract-First (OpenAPI):** `backend/api/openapi.yaml` es la fuente única de verdad (SSOT) del API del collar. Quien programe el GPS (por ejemplo con Arduino) sabe exactamente qué enviar y qué recibe, sin leer el código de la app.
 - **Tipado de punta a punta:** el esquema de PostgreSQL (`backend/supabase/pettracker_schema.sql`) define los tipos y restricciones (rangos de latitud, batería 0–100…). La app los convierte en clases tipadas (`Pet`, `SafeZone`, `LocationData`…).
+- **Validación en tiempo de ejecución ("parsear, no solo validar"):** los datos que llegan de afuera no son confiables aunque el código tenga tipos.
+  - `lib/core/validation/collar_data.dart` revisa cada ubicación del collar: rangos, fecha válida y no futura, batería, y el punto (0,0) de un GPS sin señal.
+  - Lo que no sirve se descarta. Las respuestas de Gemini también se revisan antes de usarse.
+- **gRPC / GraphQL / tRPC (no usados, y por qué):**
+  - gRPC-Web necesita un proxy (Envoy) que Supabase no ofrece.
+  - tRPC es solo para TypeScript.
+  - GraphQL no aporta aquí: las consultas son simples y REST con `select=` ya evita el over-fetching.
+
+## 3. Paralelismo real en el navegador (Workers)
+
+**Web Worker**
+- `web/workers/route_analysis_worker.js` analiza recorridos GPS en un hilo aparte: distancia, velocidad máxima, tiempo en cada zona y lugares frecuentes.
+- Se comunica con la app por `postMessage`.
+- **Demostración en el panel:** analizar 300.000 puntos (unos 7 meses de un collar).
+  - "En el hilo principal": la app se congela y el INP empeora.
+  - "Con Web Worker": la app sigue fluida.
+- El mismo análisis se puede correr con los datos reales de la mascota.
+- En celular el equivalente es un *Isolate* (`lib/core/workers/`).
+
+**Service Worker**
+- `web/pettracker_sw.js` es un proxy de red: guarda las calles del mapa ya vistas y los sonidos de alarma, para usarlos **sin internet**.
+- A propósito no guarda los archivos de la app, para no servir versiones viejas.
+- Se registra en `web/index.html`.
+- Se usa un `web/flutter_bootstrap.js` propio porque el Service Worker de Flutter se desinstala a sí mismo y borraría el nuestro.
+
+**SharedArrayBuffer y crossOriginIsolated**
+- El panel muestra si están disponibles.
+- No se activan: requieren las cabeceras COOP/COEP, y COEP bloquearía las imágenes de OpenStreetMap. Para este análisis basta `postMessage`.
+
+## 4. Patrones de rendering web
+
+- PetTracker es **CSR (Client-Side Rendering)**: el servidor envía un HTML mínimo y el navegador ejecuta la app.
+- Es el patrón adecuado para una app privada con inicio de sesión (tipo dashboard o SaaS), que no necesita SEO.
+- **Mitigación del punto débil de CSR (el primer pintado):** `web/index.html` trae una pantalla de carga en HTML/CSS puro. Se pinta de inmediato, mejorando el FCP, y se quita con el evento `flutter-first-frame`.
+- El panel muestra **TTFB, FCP, DOMContentLoaded y carga completa**, medidos con Navigation Timing y Paint Timing.
+
+## 5. Tiempo real en la web
+
+**WebSockets**
+- Las ubicaciones del collar llegan por **Supabase Realtime**: un WebSocket persistente y bidireccional.
