@@ -93,3 +93,29 @@ Future<SupabaseClient?> _connectSupabase() async {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final store = await LocalStore.open();
+  final db = await _connectSupabase();
+  final controller = buildController(store, db: db);
+  PerfMonitor.instance.start(); // mide el INP desde el inicio
+  await controller.init();
+  runApp(PetTrackerApp(controller: controller));
+}
+
+class PetTrackerApp extends StatelessWidget {
+  const PetTrackerApp({super.key, required this.controller});
+  final AppController controller;
+
+  @override
+  Widget build(BuildContext context) => AppScope(
+        controller: controller,
+        child: AnimatedBuilder(
+          animation: controller,
+          builder: (_, _) {
+            final accent = controller.selectedPet?.color ?? PetPalette.defaultColor;
+            return MaterialApp(
+              title: AppConstants.appName,
+              debugShowCheckedModeBanner: false,
+              // El color de la mascota seleccionada tiñe toda la app (con transición).
+              theme: AppTheme.light(accent),
+              darkTheme: AppTheme.dark(accent),
+
