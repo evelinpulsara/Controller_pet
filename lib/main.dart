@@ -118,4 +118,20 @@ class PetTrackerApp extends StatelessWidget {
               // El color de la mascota seleccionada tiñe toda la app (con transición).
               theme: AppTheme.light(accent),
               darkTheme: AppTheme.dark(accent),
-
+              themeMode: controller.themeMode,
+              themeAnimationDuration: const Duration(milliseconds: 600),
+              themeAnimationCurve: Curves.easeInOutCubic,
+              locale: Locale(controller.locale),
+              supportedLocales: const [Locale('es'), Locale('en')],
+              localizationsDelegates: const [
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              initialRoute: AppRoutes.splash,
+              routes: AppRoutes.routes,
+            );
+          },
+        ),
+      );
+}
