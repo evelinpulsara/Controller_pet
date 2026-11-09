@@ -226,3 +226,4 @@ class AppTheme {
 
 /// true si la persona pidió reducir las animaciones en su sistema.
 bool reduceMotion(BuildContext context) => MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+ 
