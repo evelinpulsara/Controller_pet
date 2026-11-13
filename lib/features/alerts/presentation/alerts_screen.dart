@@ -75,4 +75,3 @@ class AlertsScreen extends StatelessWidget {
         _ => AppTheme.warning,
       };
 }
- 
