@@ -2,7 +2,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 
-/// Anillo de progreso hacia la meta diaria (se llena con animación).
 class ProgressRing extends StatelessWidget {
   const ProgressRing({
     super.key,
@@ -12,7 +11,7 @@ class ProgressRing extends StatelessWidget {
     this.stroke = 12,
     this.child,
   });
-  final double progress; // 0..1 (puede pasar de 1)
+  final double progress;
   final Color color;
   final double size, stroke;
   final Widget? child;
@@ -59,7 +58,6 @@ class _RingPainter extends CustomPainter {
   bool shouldRepaint(covariant _RingPainter o) => o.p != p || o.color != color || o.track != track;
 }
 
-/// Gráfico de barras de la semana (una barra por día).
 class WeekBars extends StatelessWidget {
   const WeekBars({
     super.key,
@@ -77,7 +75,6 @@ class WeekBars extends StatelessWidget {
   final Color color;
   final bool highlightLast;
   final double height;
-  /// Qué días son datos de ejemplo (se dibujan rayados/claros).
   final List<bool> sample;
 
   @override
@@ -86,7 +83,6 @@ class WeekBars extends StatelessWidget {
     return SizedBox(
       height: height + 24,
       child: Stack(children: [
-        // Línea de la meta
         Positioned(
           left: 0,
           right: 0,

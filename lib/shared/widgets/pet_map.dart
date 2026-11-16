@@ -11,7 +11,6 @@ import 'widgets.dart';
 
 LatLng ll(LocationData l) => LatLng(l.latitude, l.longitude);
 
-/// Mapa real (OpenStreetMap) con las zonas seguras, el recorrido y la mascota.
 class PetMap extends StatelessWidget {
   const PetMap({
     super.key,
@@ -32,16 +31,13 @@ class PetMap extends StatelessWidget {
     this.ownerAccuracy,
   });
 
-  /// Ubicación del dueño (punto azul), si la compartió.
   final LatLng? owner;
   final double? ownerAccuracy;
 
   final LatLng center;
   final MapController? controller;
   final List<SafeZone> zones;
-  /// Puntos del recorrido reciente (se dibujan como una línea suave).
   final List<LatLng> trail;
-  /// Ruta de un paseo (línea más marcada).
   final List<LatLng> route;
   final Pet? pet;
   final LatLng? petPosition;
@@ -73,8 +69,6 @@ class PetMap extends StatelessWidget {
           userAgentPackageName: 'app.pettracker',
           tileBuilder: dark ? _darkTiles : null,
         ),
-        // Zonas y precisión de tu ubicación: se dibujan con un pintor propio
-        // (el CircleLayer de flutter_map se quedaba en un ciclo infinito en el navegador).
         _ZoneCircles(circles: [
           if (owner != null && _ok(ownerAccuracy) && ownerAccuracy! <= 5000)
             _Circle(owner!, ownerAccuracy!, ownerBlue.withValues(alpha: 0.10), ownerBlue.withValues(alpha: 0.3), 1),
@@ -124,7 +118,6 @@ class PetMap extends StatelessWidget {
               child: PetAvatar(pet: pet!, size: 44, live: live, alert: alert, hero: false),
             ),
         ]),
-        // Crédito obligatorio de OpenStreetMap (pequeño, abajo a la derecha).
         Align(
           alignment: Alignment.bottomRight,
           child: GestureDetector(
@@ -144,10 +137,9 @@ class PetMap extends StatelessWidget {
     );
   }
 
-  /// Oscurece las calles del mapa en modo oscuro.
   static Widget _darkTiles(BuildContext context, Widget tile, TileImage _) => ColorFiltered(
         colorFilter: const ColorFilter.matrix([
-          -0.75, 0, 0, 0, 220, //
+          -0.75, 0, 0, 0, 220,
           0, -0.75, 0, 0, 225,
           0, 0, -0.75, 0, 220,
           0, 0, 0, 1, 0,
@@ -163,7 +155,6 @@ class _Circle {
   final Color fill, border;
 }
 
-/// Capa de círculos en metros, sin repetirlos en "copias" del mundo.
 class _ZoneCircles extends StatelessWidget {
   const _ZoneCircles({required this.circles});
   final List<_Circle> circles;
@@ -204,10 +195,8 @@ class _CirclesPainter extends CustomPainter {
   bool shouldRepaint(covariant _CirclesPainter old) => true;
 }
 
-/// Radio válido: un número real y mayor que 0.
 bool _ok(double? v) => v != null && v.isFinite && v > 0;
 
-/// Calcula la distancia del mapa mostrando zonas y mascota.
 double zoomFor(double meters) {
   if (meters < 150) return 17.5;
   if (meters < 300) return 16.5;

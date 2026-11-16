@@ -8,7 +8,6 @@ import '../../features/pets/domain/pet.dart';
 export 'progress_ring.dart';
 export 'responsive.dart';
 
-/// Tarjeta base: sin sombra, borde suave.
 class AppCard extends StatelessWidget {
   const AppCard({super.key, required this.child, this.onTap, this.color, this.padding, this.margin});
   final Widget child;
@@ -33,7 +32,6 @@ class AppCard extends StatelessWidget {
       );
 }
 
-/// Título de una sección con acción opcional a la derecha ("Ver todo").
 class SectionTitle extends StatelessWidget {
   const SectionTitle(this.text, {super.key, this.action, this.onAction});
   final String text;
@@ -49,7 +47,6 @@ class SectionTitle extends StatelessWidget {
       );
 }
 
-/// Pastilla de estado (icono + texto) con transición al cambiar.
 class StatusChip extends StatelessWidget {
   const StatusChip({super.key, required this.label, required this.icon, required this.color});
   final String label;
@@ -74,8 +71,6 @@ class StatusChip extends StatelessWidget {
       );
 }
 
-/// Foto de la mascota con un anillo de su color.
-/// Si [live] es true, el anillo "late" (GPS activo). Si [alert], late en rojo.
 class PetAvatar extends StatefulWidget {
   const PetAvatar({super.key, required this.pet, this.size = 56, this.live = false, this.alert = false, this.hero = true});
   final Pet pet;
@@ -154,7 +149,6 @@ class _PetAvatarState extends State<PetAvatar> with SingleTickerProviderStateMix
   }
 }
 
-/// Solo la foto (o la inicial si no tiene foto).
 class PetPhoto extends StatelessWidget {
   const PetPhoto({super.key, required this.pet, required this.size});
   final Pet pet;
@@ -175,7 +169,6 @@ class PetPhoto extends StatelessWidget {
   }
 }
 
-/// Fila de círculos de color para elegir el color de la mascota.
 class PetColorPicker extends StatelessWidget {
   const PetColorPicker({super.key, required this.selected, required this.onChanged, required this.es});
   final Color selected;
@@ -214,13 +207,11 @@ class PetColorPicker extends StatelessWidget {
       ]);
 }
 
-/// Abre la galería (o el explorador de archivos en web) para elegir una foto.
 Future<Uint8List?> pickPetPhoto() async {
   final file = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 600, maxHeight: 600, imageQuality: 80);
   return file?.readAsBytes();
 }
 
-/// Pantalla vacía con un ícono grande y un texto que invita a actuar.
 class EmptyState extends StatelessWidget {
   const EmptyState({super.key, required this.icon, required this.text, this.action});
   final IconData icon;
@@ -249,7 +240,6 @@ class EmptyState extends StatelessWidget {
       );
 }
 
-/// Fila de dato: etiqueta a la izquierda, valor a la derecha.
 class InfoRow extends StatelessWidget {
   const InfoRow({super.key, required this.label, required this.value, this.icon});
   final String label, value;
@@ -268,7 +258,6 @@ class InfoRow extends StatelessWidget {
       );
 }
 
-/// Botón cuadrado de acceso rápido (ícono + texto), usado en Inicio.
 class QuickAction extends StatelessWidget {
   const QuickAction({super.key, required this.icon, required this.label, required this.onTap, this.badge});
   final IconData icon;
@@ -308,7 +297,6 @@ class QuickAction extends StatelessWidget {
       );
 }
 
-/// Número grande con etiqueta pequeña (ej: "2.4 km" / "hoy").
 class MiniStat extends StatelessWidget {
   const MiniStat({super.key, required this.value, required this.label, this.color});
   final String value, label;
@@ -323,7 +311,6 @@ class MiniStat extends StatelessWidget {
       ]);
 }
 
-/// Fila de números que se reparten el ancho por igual.
 class StatsRow extends StatelessWidget {
   const StatsRow({super.key, required this.children});
   final List<Widget> children;
@@ -333,7 +320,6 @@ class StatsRow extends StatelessWidget {
       ]);
 }
 
-/// Formatea una duración como "1 h 05 min" o "12 min".
 String fmtDuration(Duration d) {
   final h = d.inHours, m = d.inMinutes % 60;
   if (h > 0) return '$h h ${m.toString().padLeft(2, '0')} min';

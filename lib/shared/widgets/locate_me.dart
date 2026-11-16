@@ -5,8 +5,6 @@ import '../../core/location/owner_location.dart';
 import '../../core/theme/app_theme.dart';
 import '../../features/tracking/presentation/app_controller.dart';
 
-/// Pide la ubicación del dueño y explica qué hacer si no se pudo.
-/// Devuelve la posición (o null).
 Future<OwnerFix?> locateOwner(BuildContext context) async {
   final c = AppScope.of(context);
   final l = AppL10n.fromLocale(c.locale);
@@ -33,11 +31,9 @@ Future<OwnerFix?> locateOwner(BuildContext context) async {
   return null;
 }
 
-/// Tarjeta "Marca tu casa con tu ubicación".
 class UseMyLocationCard extends StatefulWidget {
   const UseMyLocationCard({super.key, required this.onLocated, this.autoStart = false});
   final void Function(LatLng position, double? accuracy) onLocated;
-  /// Pide el permiso apenas aparece la tarjeta.
   final bool autoStart;
   @override
   State<UseMyLocationCard> createState() => _UseMyLocationCardState();
@@ -111,7 +107,6 @@ class _UseMyLocationCardState extends State<UseMyLocationCard> {
   }
 }
 
-/// Punto azul del dueño en el mapa.
 class OwnerDot extends StatelessWidget {
   const OwnerDot({super.key});
   @override
@@ -125,11 +120,8 @@ class OwnerDot extends StatelessWidget {
       );
 }
 
-/// Color del punto del dueño.
 const ownerBlue = Color(0xFF2F80ED);
 
-/// Pide permiso y empieza a mostrar tu ubicación en tiempo real.
-/// En la cuenta demo, además mueve la demo a donde estás (la primera vez).
 Future<bool> enableOwnerLocation(BuildContext context) async {
   final c = AppScope.of(context);
   final fix = await locateOwner(context);

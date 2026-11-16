@@ -2,15 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 
-/// Diseño adaptable (responsive): la misma app se ve bien en celular,
-/// tablet y computador (Chrome, Safari...).
-///
-/// - Celular (< 840 px de ancho): todo a lo ancho y barra de pestañas abajo.
-/// - Computador o tablet (≥ 840 px): menú lateral y el contenido centrado con
-///   un ancho máximo, para que las tarjetas no se estiren de lado a lado.
 class Breakpoints {
-  static const wide = 840.0; // a partir de aquí: menú lateral
-  static const extraWide = 1200.0; // a partir de aquí: menú lateral con textos
+  static const wide = 840.0;
+  static const extraWide = 1200.0;
 }
 
 extension ResponsiveX on BuildContext {
@@ -18,8 +12,6 @@ extension ResponsiveX on BuildContext {
   bool get isWide => screenWidth >= Breakpoints.wide;
 }
 
-/// Lista con scroll cuyo contenido queda centrado y con un ancho máximo.
-/// El scroll sigue ocupando toda la pantalla (la barra queda en el borde).
 class CenteredListView extends StatelessWidget {
   const CenteredListView({
     super.key,
@@ -41,9 +33,6 @@ class CenteredListView extends StatelessWidget {
   );
 }
 
-/// Marco para pantallas completas (perfil, contactos, collar...).
-/// En pantallas anchas las muestra como una columna centrada, con su barra
-/// superior, en lugar de estirarlas de lado a lado.
 class PageFrame extends StatelessWidget {
   const PageFrame({super.key, required this.child, this.maxWidth = 760});
   final Widget child;
@@ -69,7 +58,6 @@ class PageFrame extends StatelessWidget {
   );
 }
 
-/// Dos columnas en pantallas anchas; una sola (izquierda y luego derecha) en celular.
 class TwoColumns extends StatelessWidget {
   const TwoColumns({
     super.key,

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/pet_palette.dart';
 
-/// Confeti que cae una vez (para celebrar que la mascota volvió a casa).
 class Confetti extends StatefulWidget {
   const Confetti({super.key, required this.onDone});
   final VoidCallback onDone;

@@ -41,7 +41,6 @@ class AppRoutes {
         login: (_) => const LoginScreen(),
         setup: (_) => const PageFrame(child: SetupWizard()),
         home: (_) => const HomeShell(),
-        // En computador estas pantallas se muestran como una columna centrada.
         petProfile: (_) => const PageFrame(child: PetProfileScreen()),
         history: (_) => const PageFrame(child: HistoryScreen()),
         contacts: (_) => const PageFrame(child: ContactsScreen()),
@@ -52,7 +51,6 @@ class AppRoutes {
         tech: (_) => const PageFrame(maxWidth: 960, child: TechPanelScreen()),
       };
 
-  /// A dónde ir después de la bienvenida o del inicio de sesión.
   static String nextFor(AppController c) {
     if (!c.onboarded) return onboarding;
     if (c.user == null) return login;
@@ -61,7 +59,6 @@ class AppRoutes {
   }
 }
 
-/// Pantalla principal con las 5 pestañas.
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key, this.initialIndex = 0});
   final int initialIndex;
@@ -103,8 +100,8 @@ class _HomeShellState extends State<HomeShell> {
               style: FilledButton.styleFrom(backgroundColor: AppTheme.danger),
               onPressed: () {
                 Navigator.pop(ctx);
-                c.selectPetById(petId); // muestra la mascota que se escapó
-                _go(0); // Inicio: ahí están los botones de WhatsApp
+                c.selectPetById(petId);
+                _go(0);
               },
               child: Text(l.alertMyContacts),
             ),
@@ -119,13 +116,11 @@ class _HomeShellState extends State<HomeShell> {
     final c = AppScope.of(context);
     final l = AppL10n.fromLocale(c.locale);
 
-    // Alerta para CUALQUIER mascota que salga de su zona (aunque estés viendo otra).
     for (final e in c.activeEmergencies) {
       if (_shownEmergencies.add(e.id)) {
         WidgetsBinding.instance.addPostFrameCallback((_) => _showEmergencyDialog(e.petId));
       }
     }
-    // Celebración cuando una mascota vuelve a casa.
     if (_seenCelebration == -1) _seenCelebration = c.celebrateTick;
     if (c.celebrateTick != _seenCelebration) {
       _seenCelebration = c.celebrateTick;
@@ -144,7 +139,6 @@ class _HomeShellState extends State<HomeShell> {
       const AlertsScreen(),
       const SettingsScreen(),
     ];
-    // Destinos del menú: los mismos para la barra de abajo (celular) y el menú lateral (computador).
     Widget alertIcon(bool selected) => Badge(
         isLabelVisible: unread > 0,
         backgroundColor: AppTheme.danger,
@@ -171,7 +165,6 @@ class _HomeShellState extends State<HomeShell> {
     return Stack(children: [
       Scaffold(
         body: wide
-            // Computador / tablet: menú lateral a la izquierda.
             ? Row(children: [
                 NavigationRail(
                   selectedIndex: _i,
@@ -196,7 +189,6 @@ class _HomeShellState extends State<HomeShell> {
                 Expanded(child: body),
               ])
             : body,
-        // Celular: barra de pestañas abajo.
         bottomNavigationBar: wide
             ? null
             : NavigationBar(
@@ -213,7 +205,6 @@ class _HomeShellState extends State<HomeShell> {
   }
 }
 
-/// Logo de la app arriba del menú lateral.
 class _RailLogo extends StatelessWidget {
   const _RailLogo({required this.extended});
   final bool extended;
