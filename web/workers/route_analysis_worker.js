@@ -1,14 +1,3 @@
-/*
- * Web Worker de PetTracker: analiza recorridos GPS en un hilo aparte.
- * Así el hilo principal (el que dibuja la app y responde a los clics) no se
- * bloquea aunque haya cientos de miles de puntos. No tiene acceso al DOM;
- * se comunica con la app solo por mensajes (postMessage).
- *
- * Entrada (texto JSON):
- *   { points: [[lat, lng, tiempoMs], ...], zones: [[lat, lng, radioM, nombre], ...], synthetic: N }
- *   Si synthetic > 0, genera N puntos de prueba (simula un año de datos del collar).
- * Salida (texto JSON): distancia, velocidades, tiempo por zona, lugares frecuentes, ms usados.
- */
 self.onmessage = function (event) {
   var started = performance.now();
   var input = JSON.parse(event.data);
@@ -26,7 +15,6 @@ function haversine(lat1, lng1, lat2, lng2) {
   return 2 * R * Math.asin(Math.sqrt(a));
 }
 
-// Generador pseudoaleatorio con semilla (para que el resultado sea igual en ambos hilos).
 function rng(seed) {
   var s = seed >>> 0;
   return function () { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
@@ -38,7 +26,7 @@ function synthetic(n, zones) {
   for (var i = 0; i < n; i++) {
     lat += (r() - 0.5) * 0.0004 + (home[0] - lat) * 0.02;
     lng += (r() - 0.5) * 0.0004 + (home[1] - lng) * 0.02;
-    t += 60000; // un punto por minuto
+    t += 60000;
     out[i] = [lat, lng, t];
   }
   return out;
@@ -50,7 +38,6 @@ function analyze(points, zones) {
   for (var z = 0; z < zones.length; z++) zoneMs[zones[z][3]] = 0;
   for (var i = 0; i < points.length; i++) {
     var p = points[i];
-    // Lugares frecuentes: cuadrícula de ~100 m
     var key = Math.round(p[0] * 1000) + ',' + Math.round(p[1] * 1000);
     cells[key] = (cells[key] || 0) + 1;
     if (i === 0) continue;
