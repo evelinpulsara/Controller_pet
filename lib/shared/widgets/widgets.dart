@@ -6,6 +6,7 @@ import '../../core/theme/pet_palette.dart';
 import '../../features/pets/domain/pet.dart';
 
 export 'progress_ring.dart';
+export 'responsive.dart';
 
 /// Tarjeta base: sin sombra, borde suave.
 class AppCard extends StatelessWidget {
