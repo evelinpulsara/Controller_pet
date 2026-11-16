@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
 
-/// Resultado del análisis de un recorrido GPS.
 class RouteAnalysis {
   RouteAnalysis.fromJson(Map<String, dynamic> j)
       : points = (j['points'] as num).toInt(),
@@ -18,16 +17,12 @@ class RouteAnalysis {
   final int points;
   final double distanceM, maxSpeedKmh, avgSpeedKmh, totalMs, outsideMs, elapsedMs;
   final Map<String, double> zoneMs;
-  final List<List<double>> topPlaces; // [lat, lng, cuántas veces]
-  final String thread; // 'web-worker' | 'main-thread' | 'isolate'
+  final List<List<double>> topPlaces;
+  final String thread;
 
-  /// Porcentaje del tiempo que estuvo dentro de alguna zona.
   double get insidePct => totalMs <= 0 ? 100 : (1 - outsideMs / totalMs) * 100;
 }
 
-/// Mismo algoritmo que web/workers/route_analysis_worker.js, en Dart.
-/// Se usa para comparar "en el hilo principal" contra "en el Web Worker",
-/// y en celular (donde corre en un Isolate, que es el equivalente).
 Map<String, dynamic> analyzeRouteJson(String input, {String thread = 'main-thread'}) {
   final sw = Stopwatch()..start();
   final j = jsonDecode(input) as Map<String, dynamic>;

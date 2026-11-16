@@ -1,14 +1,11 @@
 import '../../features/alerts/domain/pet_alert.dart';
 
-/// All UI strings in English and Spanish.
-/// Usage: final l = AppL10n.of(context);  then  l.settings, l.logOut, etc.
 class AppL10n {
   const AppL10n._(this.locale);
 
-  final String locale; // 'en' | 'es'
+  final String locale;
 
   static AppL10n of(dynamic context) {
-    // Resolved via AppScope; see app_controller.dart
     throw UnimplementedError('Use AppL10n.fromLocale instead.');
   }
 
@@ -16,10 +13,8 @@ class AppL10n {
 
   bool get isEs => locale == 'es';
 
-  /// Texto en el idioma actual: `l.t('Hola', 'Hello')`.
   String t(String es, String en) => isEs ? es : en;
 
-  // ── General ──────────────────────────────────────────────────────────────
   String get appName => 'PetTracker';
   String get save => isEs ? 'Guardar' : 'Save';
   String get cancel => isEs ? 'Cancelar' : 'Cancel';
@@ -27,7 +22,6 @@ class AppL10n {
   String get spanish => isEs ? 'Español' : 'Spanish';
   String get english => isEs ? 'Inglés' : 'English';
 
-  // ── Auth ──────────────────────────────────────────────────────────────────
   String get welcomeBack => isEs ? 'Bienvenido de nuevo' : 'Welcome back';
   String get createAccount => isEs ? 'Crear cuenta' : 'Create account';
   String get email => isEs ? 'Correo electrónico' : 'Email';
@@ -40,7 +34,6 @@ class AppL10n {
       ? 'Ingresa un correo válido y una contraseña de al menos 4 caracteres'
       : 'Enter a valid email and a password of 4+ characters';
 
-  // ── Bottom nav ────────────────────────────────────────────────────────────
   String get navHome => isEs ? 'Inicio' : 'Home';
   String get navLive => isEs ? 'En vivo' : 'Live';
   String get navZones => isEs ? 'Zonas' : 'Zones';
@@ -50,7 +43,6 @@ class AppL10n {
   String get navAlerts => isEs ? 'Alertas' : 'Alerts';
   String get navSettings => isEs ? 'Ajustes' : 'Settings';
 
-  // ── Dashboard ─────────────────────────────────────────────────────────────
   String hello(String name) => isEs ? 'Hola, $name' : 'Hi, $name';
   String inZoneShort(String zone) => isEs ? 'En $zone' : 'At $zone';
   String updatedAgo(int s) => s < 3
@@ -90,7 +82,6 @@ class AppL10n {
   String get addPet => isEs ? 'Agregar mascota' : 'Add pet';
   String get history => isEs ? 'Historial' : 'History';
 
-  // ── Add pet dialog ────────────────────────────────────────────────────────
   String get addPetTitle => isEs ? 'Agregar mascota' : 'Add pet';
   String get petName => isEs ? 'Nombre' : 'Name';
   String get petSpecies => isEs ? 'Especie' : 'Species';
@@ -98,7 +89,6 @@ class AppL10n {
   String get petAge => isEs ? 'Edad (años)' : 'Age (years)';
   String get petWeight => isEs ? 'Peso (kg)' : 'Weight (kg)';
 
-  // ── Pet profile ───────────────────────────────────────────────────────────
   String get name => isEs ? 'Nombre' : 'Name';
   String get species => isEs ? 'Especie' : 'Species';
   String get breed => isEs ? 'Raza' : 'Breed';
@@ -111,7 +101,6 @@ class AppL10n {
   String get connected => isEs ? 'Conectado' : 'Connected';
   String get disconnected => isEs ? 'Desconectado' : 'Disconnected';
 
-  // ── Tracking ──────────────────────────────────────────────────────────────
   String get liveTracking => isEs ? 'Seguimiento en vivo' : 'Live tracking';
   String get trackingPaused => isEs ? 'Seguimiento pausado' : 'Tracking paused';
   String get trackingInside => isEs ? 'Seguimiento: dentro de la zona' : 'Tracking: inside zone';
@@ -123,7 +112,6 @@ class AppL10n {
   String outsideZoneByMsg(String dist) =>
       isEs ? 'Fuera de la zona por $dist' : 'Outside safe zone by $dist';
 
-  // ── Geofencing ────────────────────────────────────────────────────────────
   String get safeZone => isEs ? 'Zona segura' : 'Safe zone';
   String get zoneName => isEs ? 'Nombre de la zona' : 'Zone name';
   String radiusLabel(String dist) => isEs ? 'Radio: $dist' : 'Radius: $dist';
@@ -135,7 +123,6 @@ class AppL10n {
       isEs ? 'Desactivar para que vuelva a casa' : 'Turn off to let the pet wander back home';
   String get simulateDisconnect => isEs ? 'Simular desconexión del tracker' : 'Simulate tracker disconnect';
 
-  // ── Asistente de emergencias (IA) ─────────────────────────────────────────
   String get emergencyAssistant => isEs ? 'Asistente de emergencias IA' : 'AI emergency assistant';
   String assistantWatching(String pet, int n) => isEs
       ? 'Estoy vigilando a $pet. Si sale de la zona segura, te aviso al instante y preparo un mensaje '
@@ -160,7 +147,6 @@ class AppL10n {
   String get close => isEs ? 'Cerrar' : 'Close';
   String get alertMyContacts => isEs ? 'Avisar a mis contactos' : 'Alert my contacts';
 
-  // ── Contactos de emergencia ───────────────────────────────────────────────
   String get emergencyContacts => isEs ? 'Contactos de emergencia' : 'Emergency contacts';
   String contactsExplanation(String pet) => isEs
       ? 'Si $pet sale de la zona segura, la IA escribirá un mensaje para pedirles ayuda a estas personas por WhatsApp.'
@@ -178,10 +164,8 @@ class AppL10n {
       : 'Enter a name and a valid mobile number with country code.';
   String get delete => isEs ? 'Eliminar' : 'Delete';
 
-  // ── Alerts ────────────────────────────────────────────────────────────────
   String get noAlerts => isEs ? 'Sin alertas. Todo está bien 🐾' : 'No alerts yet. Everything looks fine 🐾';
 
-  /// Texto de cada alerta según su tipo, en el idioma elegido.
   String alertMessage(AlertType type, Map<String, String> p) {
     final pet = p['pet'] ?? '', zone = p['zone'] ?? '';
     return switch (type) {
@@ -221,12 +205,10 @@ class AppL10n {
     };
   }
 
-  // ── History ───────────────────────────────────────────────────────────────
   String get locationHistory => isEs ? 'Historial de ubicación' : 'Location history';
   String get waitingLocation =>
       isEs ? 'Esperando la primera actualización de ubicación...' : 'Waiting for the first location update...';
 
-  // ── Settings ──────────────────────────────────────────────────────────────
   String get settings => isEs ? 'Ajustes' : 'Settings';
   String get safeZoneAlerts => isEs ? 'Alertas de zona segura' : 'Safe zone alerts';
   String get lowBatteryAlerts => isEs ? 'Alertas de batería baja' : 'Low battery alerts';

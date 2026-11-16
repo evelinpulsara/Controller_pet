@@ -1,5 +1,3 @@
-/// Una interacción medida por el navegador (Event Timing API).
-/// INP = Input Delay + Processing Duration + Presentation Delay.
 class InteractionSample {
   const InteractionSample({
     required this.id,
@@ -10,16 +8,15 @@ class InteractionSample {
     required this.at,
   });
   final int id;
-  final String type; // pointerdown, click, keydown...
-  final double inputDelay, processing, presentation; // ms
+  final String type;
+  final double inputDelay, processing, presentation;
   final DateTime at;
   double get total => inputDelay + processing + presentation;
 }
 
-/// Tiempos de carga de la página (Navigation Timing + Paint Timing).
 class LoadTimings {
   const LoadTimings({this.ttfb, this.fcp, this.domContentLoaded, this.load});
-  final double? ttfb, fcp, domContentLoaded, load; // ms
+  final double? ttfb, fcp, domContentLoaded, load;
 }
 
 class ServiceWorkerInfo {

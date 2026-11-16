@@ -7,18 +7,12 @@ import 'perf_types.dart';
 
 export 'perf_types.dart';
 
-/// Mide en vivo qué tan rápido responde la app (INP) y cómo van los frames.
-///
-/// - INP (Interaction to Next Paint) = Input Delay + Processing + Presentation Delay.
-///   Bueno <= 200 ms, Necesita mejora 200-500 ms, Pobre > 500 ms.
-/// - Frames de Flutter: tiempo en el hilo de UI (build/layout, como el Main Thread)
-///   y en el hilo de Raster (pintado, como el proceso de GPU).
 class PerfMonitor extends ChangeNotifier {
   PerfMonitor._();
   static final PerfMonitor instance = PerfMonitor._();
 
   bool _started = false;
-  final Map<int, InteractionSample> _interactions = {}; // por interactionId (se queda la más lenta)
+  final Map<int, InteractionSample> _interactions = {};
   final List<double> _uiMs = [], _rasterMs = [];
   int longTasks = 0;
   double longestTaskMs = 0;
@@ -58,7 +52,6 @@ class PerfMonitor extends ChangeNotifier {
     _notifySoon();
   }
 
-  // Agrupa las notificaciones (las interacciones llegan en ráfagas).
   Timer? _debounce;
   void _notifySoon() {
     _debounce ??= Timer(const Duration(milliseconds: 300), () {
@@ -70,7 +63,6 @@ class PerfMonitor extends ChangeNotifier {
   List<InteractionSample> get interactions =>
       _interactions.values.toList()..sort((a, b) => b.at.compareTo(a.at));
 
-  /// INP: la peor interacción (o el percentil 98 si hay 50 o más).
   InteractionSample? get inpSample {
     if (_interactions.isEmpty) return null;
     final sorted = _interactions.values.toList()..sort((a, b) => b.total.compareTo(a.total));
@@ -100,7 +92,6 @@ class PerfMonitor extends ChangeNotifier {
   LoadTimings? get loadTimings => platform.browserLoadTimings();
   Future<ServiceWorkerInfo> serviceWorkerInfo() => platform.browserServiceWorkerInfo();
 
-  /// Bloquea el hilo principal [ms] milisegundos (para ver cómo empeora el INP).
   void blockMainThread(int ms) => platform.busyWait(ms);
 
   void reset() {
@@ -113,8 +104,6 @@ class PerfMonitor extends ChangeNotifier {
   }
 }
 
-/// Demostración del Event Loop: en qué orden se ejecuta el código.
-/// Código síncrono (Call Stack) -> Microtasks -> Tasks (Macrotasks).
 Future<List<String>> eventLoopDemo(bool es) async {
   final log = <String>[];
   log.add(es ? 'Código síncrono #1 (Call Stack)' : 'Synchronous code #1 (Call Stack)');

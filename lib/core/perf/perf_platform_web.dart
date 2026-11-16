@@ -1,4 +1,3 @@
-// Versión web: usa las APIs de rendimiento del navegador.
 import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
 import 'package:web/web.dart' as web;
@@ -6,7 +5,6 @@ import 'perf_types.dart';
 
 double _num(JSObject o, String key) => (o.getProperty<JSNumber?>(key.toJS))?.toDartDouble ?? 0;
 
-/// Observa las interacciones (Event Timing) y las tareas largas (Long Tasks).
 void startBrowserObservers({
   required void Function(InteractionSample s) onInteraction,
   required void Function(double durationMs) onLongTask,
@@ -16,7 +14,7 @@ void startBrowserObservers({
       for (final e in list.getEntries().toDart) {
         final o = e as JSObject;
         final id = (o.getProperty<JSNumber?>('interactionId'.toJS))?.toDartInt ?? 0;
-        if (id == 0) continue; // no es una interacción del usuario (ej. mousemove)
+        if (id == 0) continue;
         final start = _num(o, 'startTime');
         final pStart = _num(o, 'processingStart');
         final pEnd = _num(o, 'processingEnd');
@@ -41,7 +39,6 @@ void startBrowserObservers({
     }).toJS);
     longTasks.observe(web.PerformanceObserverInit(type: 'longtask', buffered: true));
   } catch (_) {
-    // Safari y Firefox no soportan Long Tasks.
   }
 }
 
@@ -72,7 +69,6 @@ LoadTimings? browserLoadTimings() {
   }
 }
 
-/// ¿Está activo el Service Worker de la app y cuántas calles del mapa guardó?
 Future<ServiceWorkerInfo> browserServiceWorkerInfo() async {
   try {
     final nav = web.window.navigator as JSObject;
@@ -89,7 +85,6 @@ Future<ServiceWorkerInfo> browserServiceWorkerInfo() async {
   }
 }
 
-/// Bloquea el hilo principal a propósito (para la demostración de INP).
 void busyWait(int ms) {
   final end = web.window.performance.now() + ms;
   while (web.window.performance.now() < end) {}

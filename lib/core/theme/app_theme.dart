@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'pet_palette.dart';
 
-/// Colores base que cambian entre modo claro y oscuro.
-/// Uso: `context.colors.ink`, `context.colors.surface`...
 @immutable
 class AppColors extends ThemeExtension<AppColors> {
   const AppColors({
@@ -70,10 +68,7 @@ extension AppColorsX on BuildContext {
   TextTheme get text => Theme.of(this).textTheme;
 }
 
-/// Diseño de la app: base minimalista (blanco con un toque salvia, o verde
-/// muy oscuro en modo oscuro) y un acento que cambia según la mascota.
 class AppTheme {
-  // Estados (iguales en claro y oscuro)
   static const danger = Color(0xFFE5484D);
   static const warning = Color(0xFFE69A12);
   static const ok = Color(0xFF2FB592);
@@ -224,5 +219,4 @@ class AppTheme {
   }
 }
 
-/// true si la persona pidió reducir las animaciones en su sistema.
 bool reduceMotion(BuildContext context) => MediaQuery.maybeDisableAnimationsOf(context) ?? false;

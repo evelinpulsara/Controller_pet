@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Colores que se le pueden asignar a cada mascota.
-/// El color elegido tiñe toda la app mientras esa mascota está seleccionada.
 class PetPalette {
   static const mint = Color(0xFF2FB592);
   static const sky = Color(0xFF4C8DF6);

@@ -2,7 +2,6 @@ import 'dart:math';
 
 final _rnd = Random.secure();
 
-/// Identificador único (UUID v4), el formato que usa la base de datos.
 String newId() {
   final b = List<int>.generate(16, (_) => _rnd.nextInt(256));
   b[6] = (b[6] & 0x0f) | 0x40;

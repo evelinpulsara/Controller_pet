@@ -1,4 +1,3 @@
-// Versión para celular / pruebas: estas métricas solo existen en el navegador.
 import 'perf_types.dart';
 
 void startBrowserObservers({
@@ -11,7 +10,6 @@ bool get browserSharedArrayBufferAvailable => false;
 LoadTimings? browserLoadTimings() => null;
 Future<ServiceWorkerInfo> browserServiceWorkerInfo() async => const ServiceWorkerInfo(supported: false);
 
-/// Bloquea el hilo principal a propósito (para la demostración de INP).
 void busyWait(int ms) {
   final sw = Stopwatch()..start();
   while (sw.elapsedMilliseconds < ms) {}

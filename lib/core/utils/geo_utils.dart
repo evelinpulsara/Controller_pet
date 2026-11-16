@@ -1,7 +1,6 @@
 import 'dart:math';
 
 class GeoUtils {
-  /// Haversine distance in meters.
   static double distanceMeters(double lat1, double lng1, double lat2, double lng2) {
     const r = 6371000.0;
     double rad(double d) => d * pi / 180;
