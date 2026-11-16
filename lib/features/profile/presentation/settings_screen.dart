@@ -14,7 +14,7 @@ class SettingsScreen extends StatelessWidget {
     final accent = context.accent;
     final pet = c.selectedPet?.name ?? '';
     return SafeArea(
-      child: ListView(padding: const EdgeInsets.fromLTRB(20, 16, 20, 24), children: [
+      child: CenteredListView(maxWidth: 760, children: [
         Text(l.settings, style: context.text.headlineSmall),
         const SizedBox(height: 14),
 

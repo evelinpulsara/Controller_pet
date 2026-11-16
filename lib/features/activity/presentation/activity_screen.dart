@@ -27,7 +27,7 @@ class ActivityScreen extends StatelessWidget {
     final walk = c.activeWalk;
 
     return SafeArea(
-      child: ListView(padding: const EdgeInsets.fromLTRB(20, 16, 20, 24), children: [
+      child: CenteredListView(maxWidth: 880, children: [
         Text(l.t('Actividad de ${pet.name}', "${pet.name}'s activity"), style: context.text.headlineSmall),
         const SizedBox(height: 16),
 
@@ -136,7 +136,7 @@ class ActivityScreen extends StatelessWidget {
           ),
         for (final w in c.walks.take(20))
           AppCard(
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => WalkDetailScreen(walk: w))),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PageFrame(child: WalkDetailScreen(walk: w)))),
             child: Row(children: [
               Container(
                 width: 44,

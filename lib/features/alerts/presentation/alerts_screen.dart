@@ -16,7 +16,7 @@ class AlertsScreen extends StatelessWidget {
     return SafeArea(
       child: alerts.isEmpty
           ? EmptyState(icon: Icons.notifications_none_rounded, text: l.noAlerts)
-          : ListView(padding: const EdgeInsets.fromLTRB(20, 16, 20, 24), children: [
+          : CenteredListView(maxWidth: 760, children: [
               Row(children: [
                 Expanded(child: Text(l.navAlerts, style: context.text.headlineSmall)),
                 TextButton(onPressed: c.clearAlerts, child: Text(l.t('Borrar todo', 'Clear all'))),

@@ -29,7 +29,7 @@ class GeofencingScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(l.t('Zonas seguras de ${pet?.name ?? ''}', "${pet?.name ?? ''}'s safe zones"))),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ZoneEditor())),
+        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PageFrame(maxWidth: 960, child: ZoneEditor()))),
         icon: const Icon(Icons.add_location_alt_rounded),
         label: Text(l.t('Nueva zona', 'New zone')),
       ),
@@ -59,7 +59,7 @@ class GeofencingScreen extends StatelessWidget {
         if (zones.isNotEmpty)
           AppCard(
             color: context.accent.withValues(alpha: 0.10),
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ZoneEditor(zone: zones.first))),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PageFrame(maxWidth: 960, child: ZoneEditor(zone: zones.first)))),
             child: Row(children: [
               Icon(Icons.my_location_rounded, color: context.accent),
               const SizedBox(width: 12),
@@ -74,7 +74,7 @@ class GeofencingScreen extends StatelessWidget {
           EmptyState(icon: Icons.shield_outlined, text: l.t('Aún no hay zonas. Crea la primera.', 'No zones yet. Create the first one.')),
         for (final z in zones)
           AppCard(
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ZoneEditor(zone: z))),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PageFrame(maxWidth: 960, child: ZoneEditor(zone: z)))),
             child: Row(children: [
               Container(
                 width: 44,
