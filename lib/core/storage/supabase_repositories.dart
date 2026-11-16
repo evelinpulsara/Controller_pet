@@ -10,10 +10,6 @@ import '../../features/tracking/domain/location_data.dart';
 import '../../features/walks/domain/walk.dart';
 import '../validation/collar_data.dart';
 
-/// Repositorios que guardan en Supabase (esquema `pettracker`).
-/// La seguridad la pone la base de datos (RLS): cada usuario solo ve lo suyo.
-/// El cliente debe estar configurado con el esquema `pettracker` por defecto.
-
 String _date(DateTime d) =>
     '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 double _d(Object? v, [double or = 0]) => v == null ? or : (v as num).toDouble();
@@ -69,14 +65,13 @@ class SupabasePetRepository implements PetRepository {
   @override
   Future<void> updatePet(Pet pet) async {
     await _db.from('pets').update(_row(pet)..remove('id')).eq('id', pet.id);
-    // Si cambió el código del collar, se actualiza (o se crea) su registro.
     final dev = await _db.from('tracker_devices').select('id, device_uid').eq('pet_id', pet.id).maybeSingle();
     if (dev == null && pet.trackerId.isNotEmpty) {
       await _db.from('tracker_devices').insert({'pet_id': pet.id, 'device_uid': pet.trackerId});
     } else if (dev != null && dev['device_uid'] != pet.trackerId) {
       await _db.from('tracker_devices').update({
         'device_uid': pet.trackerId,
-        'device_key_hash': null, // collar nuevo: necesita su propia clave
+        'device_key_hash': null,
         'is_online': false,
         'battery_level': null,
         'last_seen_at': null,
@@ -108,13 +103,10 @@ class SupabaseTrackerRepository implements TrackerRepository {
     );
   }
 
-  /// La app solo cambia lo que el dueño decide (modo ahorro). La batería y la
-  /// conexión las escribe el collar real al enviar su ubicación.
   @override
   Future<void> saveTracker(TrackerDevice t) =>
       _db.from('tracker_devices').update({'power_save': t.powerSave}).eq('device_uid', t.id);
 
-  /// El dueño le pone una clave secreta al collar (para que pueda enviar ubicaciones).
   Future<void> setDeviceKey(String deviceUid, String key) =>
       _db.rpc('set_device_key', params: {'p_device_uid': deviceUid, 'p_key': key});
 }
@@ -152,7 +144,6 @@ class SupabaseSafeZoneRepository implements SafeZoneRepository {
       'center_lon': z.longitude,
       'radius_m': z.radius.clamp(10, 50000),
       'is_active': z.isEnabled,
-      // La primera zona de la mascota es su "Casa".
       if (existing.isEmpty || existing.first['id'] == z.id) 'is_home': true,
     });
   }
@@ -205,20 +196,18 @@ class SupabaseLocationRepository implements LocationRepository {
         await _db.from('location_history').select().eq('pet_id', petId).order('recorded_at', ascending: false).limit(300);
     final out = <LocationHistory>[];
     for (final r in rows) {
-      final l = parseCollarLocation(r); // datos de afuera: se validan antes de usarlos
+      final l = parseCollarLocation(r);
       if (l == null) continue;
       out.add(LocationHistory(
         id: '${r['id']}',
         petId: r['pet_id'],
-        status: 'Inside safe zone', // la pantalla lo calcula con las zonas
+        status: 'Inside safe zone',
         location: l,
       ));
     }
     return out;
   }
 
-  /// Las ubicaciones reales las guarda el collar (función report_location),
-  /// así que la app no las vuelve a escribir.
   @override
   Future<void> addLocation(LocationHistory entry) async {}
 }

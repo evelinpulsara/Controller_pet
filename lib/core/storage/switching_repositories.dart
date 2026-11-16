@@ -7,13 +7,10 @@ import '../../features/pets/domain/pet.dart';
 import '../../features/tracking/domain/location_data.dart';
 import '../../features/walks/domain/walk.dart';
 
-/// Decide dónde se guardan los datos del usuario que inició sesión:
-/// cuenta demo -> en el dispositivo; cuentas reales -> en Supabase.
 class StorageMode {
   bool remote = false;
 }
 
-/// Cada repositorio usa el local o el de Supabase según [StorageMode].
 class SwitchingPetRepository implements PetRepository {
   SwitchingPetRepository(this.mode, this.local, this.remote);
   final StorageMode mode;
@@ -36,7 +33,6 @@ class SwitchingTrackerRepository implements TrackerRepository {
   final TrackerRepository local;
   final TrackerRepository? remote;
   TrackerRepository get _r => mode.remote && remote != null ? remote! : local;
-  /// El repositorio que se está usando ahora (para funciones extra como la clave del collar).
   TrackerRepository get active => _r;
   @override
   Future<TrackerDevice> getTracker(String trackerId) => _r.getTracker(trackerId);
@@ -82,7 +78,6 @@ class SwitchingLocationRepository implements LocationRepository {
   Future<List<LocationHistory>> getHistory(String petId) => _r.getHistory(petId);
   @override
   Future<void> addLocation(LocationHistory entry) => _r.addLocation(entry);
-  /// Limpia la memoria intermedia del repositorio local.
   void clearCache() {
     try {
       (local as dynamic).clearCache();

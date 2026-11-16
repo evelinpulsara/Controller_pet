@@ -8,9 +8,6 @@ import '../../features/tracking/domain/location_data.dart';
 import '../../features/walks/domain/walk.dart';
 import 'local_store.dart';
 
-/// Repositorios que guardan en el dispositivo con [LocalStore].
-/// Para conectar el backend, crea versiones que hablen con la API e intercámbialas en main.dart.
-
 class LocalPetRepository implements PetRepository {
   LocalPetRepository(this._s);
   final LocalStore _s;
@@ -38,7 +35,6 @@ class LocalTrackerRepository implements TrackerRepository {
   Future<TrackerDevice> getTracker(String id) async {
     final found = _all().where((t) => t.id == id);
     if (found.isNotEmpty) return found.first;
-    // Collar nuevo: todavía no ha enviado nada (sin batería ni conexión conocidas).
     final t = TrackerDevice(id: id, batteryLevel: 0, isConnected: false, lastUpdate: DateTime.fromMillisecondsSinceEpoch(0));
     await saveTracker(t);
     return t;
@@ -96,14 +92,12 @@ class LocalLocationRepository implements LocationRepository {
   String _k(String petId) => 'history.$petId';
   final Map<String, List<LocationHistory>> _cache = {};
   final Map<String, int> _pending = {};
-  /// La memoria intermedia es por usuario y mascota.
   String _c(String petId) => '${_s.scope}|$petId';
 
   @override
   Future<List<LocationHistory>> getHistory(String petId) async =>
       List.of(_cache[_c(petId)] ??= _s.readList(_k(petId), LocationHistory.fromJson));
 
-  /// Olvida lo que tiene en memoria (al cambiar de usuario o reiniciar la demo).
   void clearCache() {
     _cache.clear();
     _pending.clear();
@@ -114,7 +108,6 @@ class LocalLocationRepository implements LocationRepository {
     final l = _cache[_c(e.petId)] ??= _s.readList(_k(e.petId), LocationHistory.fromJson);
     l.insert(0, e);
     if (l.length > 300) l.removeRange(300, l.length);
-    // Se guarda cada 10 ubicaciones para no escribir en disco a cada segundo.
     final n = (_pending[_c(e.petId)] ?? 0) + 1;
     _pending[_c(e.petId)] = n % 10;
     if (n >= 10) await _s.writeList(_k(e.petId), l, (x) => x.toJson());
