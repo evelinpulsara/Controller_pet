@@ -18,9 +18,6 @@ import '../../geofencing/domain/safe_zone.dart';
 import '../../pets/domain/pet.dart';
 import '../../tracking/presentation/app_controller.dart';
 
-/// Configuración guiada de la primera mascota:
-/// mascota -> zona segura -> contactos -> collar.
-/// También se usa para agregar más mascotas (con [addingAnother]).
 class SetupWizard extends StatefulWidget {
   const SetupWizard({super.key, this.addingAnother = false});
   final bool addingAnother;
@@ -33,22 +30,18 @@ class _SetupWizardState extends State<SetupWizard> {
   int _step = 0;
   static const _steps = 4;
 
-  // Paso 1: mascota
   final _name = TextEditingController(), _breed = TextEditingController();
   final _age = TextEditingController(text: '1'), _weight = TextEditingController();
   String? _species;
   Color _color = PetPalette.defaultColor;
   Uint8List? _photo;
-  // Paso 2: zona
   LatLng _home = const LatLng(AppConstants.homeLatitude, AppConstants.homeLongitude);
   double _radius = 100;
   final _zoneName = TextEditingController();
   final _map = MapController();
   LatLng? _owner;
   double? _ownerAcc;
-  // Paso 3: contactos
   final List<EmergencyContact> _contacts = [];
-  // Paso 4: collar
   final _collar = TextEditingController();
   late final String _petId = newId();
 
@@ -122,6 +115,19 @@ class _SetupWizardState extends State<SetupWizard> {
   }
 
   @override
+  void dispose() {
+    _page.dispose();
+    _name.dispose();
+    _breed.dispose();
+    _age.dispose();
+    _weight.dispose();
+    _zoneName.dispose();
+    _map.dispose();
+    _collar.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final c = AppScope.of(context);
     final l = AppL10n.fromLocale(c.locale);
@@ -132,7 +138,6 @@ class _SetupWizardState extends State<SetupWizard> {
       l.t('Su collar GPS', 'Their GPS collar'),
     ];
     return Theme(
-      // La configuración ya se pinta con el color que eliges.
       data: Theme.of(context).brightness == Brightness.dark ? AppTheme.dark(_color) : AppTheme.light(_color),
       child: Builder(builder: (context) {
         return Scaffold(
@@ -260,7 +265,6 @@ class _SetupWizardState extends State<SetupWizard> {
   }
 
   Widget _zoneStep(AppL10n l, bool metric) => ListView(padding: const EdgeInsets.all(20), children: [
-        // Al llegar a este paso se pide el permiso de ubicación.
         UseMyLocationCard(
           autoStart: !widget.addingAnother,
           onLocated: (p, acc) {

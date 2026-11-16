@@ -1,6 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// Resultado de iniciar sesión o crear la cuenta.
 enum LoginStatus { ok, invalid, confirmEmail, error }
 
 class LoginResult {
@@ -11,17 +10,13 @@ class LoginResult {
   static const success = LoginResult(LoginStatus.ok);
 }
 
-/// Inicio de sesión de las cuentas reales.
 abstract class AuthService {
-  /// Correo de la sesión guardada (null si no hay).
   String? get currentEmail;
   Future<LoginResult> signIn(String email, String password);
   Future<LoginResult> signUp(String email, String password, {String? fullName});
   Future<void> signOut();
 }
 
-/// Cuentas reales con Supabase Auth. Al registrarse se marca `app: pettracker`
-/// para que la base de datos cree el perfil solo para esta app.
 class SupabaseAuthService implements AuthService {
   SupabaseAuthService(this._client);
   final SupabaseClient _client;
@@ -53,7 +48,6 @@ class SupabaseAuthService implements AuthService {
         password: password,
         data: {'app': 'pettracker', 'full_name': fullName ?? email.split('@').first},
       );
-      // Si Supabase pide confirmar el correo, no hay sesión todavía.
       if (res.session == null) return const LoginResult(LoginStatus.confirmEmail);
       await _ensureProfile();
       return LoginResult.success;
@@ -64,7 +58,6 @@ class SupabaseAuthService implements AuthService {
     }
   }
 
-  /// Por si la cuenta se creó por fuera de la app: asegura que tenga perfil.
   Future<void> _ensureProfile() async {
     final u = _client.auth.currentUser;
     if (u == null) return;

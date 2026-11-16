@@ -7,11 +7,8 @@ class Pet {
   final String id, name, species, breed, trackerId, emergencyContact;
   final int age;
   final double weight;
-  /// Color personal de la mascota (tiñe la app cuando está seleccionada).
   final int colorValue;
-  /// Foto de perfil (null = se muestra la inicial del nombre).
   final Uint8List? photo;
-  /// Meta diaria de distancia, en metros.
   final double dailyGoalMeters;
   const Pet({
     required this.id, required this.name, required this.species, required this.breed,
@@ -55,7 +52,6 @@ class Pet {
         dailyGoalMeters: (j['goal'] as num?)?.toDouble() ?? 3000,
       );
 
-  /// Meta sugerida según la especie.
   static double suggestedGoal(String species) {
     final s = species.toLowerCase();
     if (s.startsWith('gat') || s.startsWith('cat')) return 800;
@@ -64,18 +60,14 @@ class Pet {
   }
 }
 
-/// Color por defecto para mascotas nuevas.
 const defaultPetColor = PetPalette.defaultColor;
 
-/// Collar GPS de una mascota.
 class TrackerDevice {
   final String id;
   final int batteryLevel;
   final bool isConnected;
   final DateTime lastUpdate;
-  /// Modo ahorro: envía la ubicación con menos frecuencia para durar más.
   final bool powerSave;
-  /// Calidad de señal de 0 a 4 (según la precisión del GPS).
   final int signal;
   const TrackerDevice({
     required this.id, required this.batteryLevel,
@@ -92,7 +84,6 @@ class TrackerDevice {
         signal: signal ?? this.signal,
       );
 
-  /// Horas aproximadas que le quedan a la batería.
   double get estimatedHoursLeft => batteryLevel * (powerSave ? 0.72 : 0.36);
 
   Map<String, dynamic> toJson() => {
@@ -107,7 +98,6 @@ class TrackerDevice {
       );
 }
 
-/// Cambiar por versiones que usen la API del backend cuando esté lista.
 abstract class PetRepository {
   Future<List<Pet>> getPets();
   Future<void> addPet(Pet pet);

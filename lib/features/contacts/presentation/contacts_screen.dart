@@ -6,7 +6,6 @@ import '../../../shared/widgets/widgets.dart';
 import '../../tracking/presentation/app_controller.dart';
 import '../domain/emergency_contact.dart';
 
-/// Lista de contactos de emergencia de la mascota seleccionada.
 class ContactsScreen extends StatelessWidget {
   const ContactsScreen({super.key});
 
@@ -60,7 +59,6 @@ class ContactsScreen extends StatelessWidget {
   }
 }
 
-/// Formulario para un contacto de emergencia. Devuelve el contacto o null si se cancela.
 Future<EmergencyContact?> showContactForm(BuildContext context, {required String petId}) {
   final c = AppScope.of(context);
   final l = AppL10n.fromLocale(c.locale);

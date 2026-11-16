@@ -13,10 +13,8 @@ import '../../health/presentation/health_screen.dart';
 import '../../tracking/presentation/app_controller.dart';
 import '../domain/pet.dart';
 
-/// Pestaña de Inicio.
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key, required this.onOpenTab});
-  /// Cambia de pestaña (1 = Mapa, 2 = Actividad...).
   final ValueChanged<int> onOpenTab;
 
   @override
@@ -32,11 +30,9 @@ class DashboardScreen extends StatelessWidget {
             : l.t('Buenas noches', 'Good evening');
     final otherEmergencies = c.activeEmergencies.where((e) => e.petId != pet?.id).toList();
 
-    // Accesos rápidos (Salud, Zonas, Collar...).
     final quickActions = GridView(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      // Alto fijo: se ve bien en celular y en pantallas anchas.
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 3, mainAxisSpacing: 10, crossAxisSpacing: 10, mainAxisExtent: 104),
 
@@ -70,8 +66,6 @@ class DashboardScreen extends StatelessWidget {
       ],
     );
 
-    // Celular: una sola columna. Computador: dos columnas (la mascota a la
-    // izquierda; avisos, IA y accesos rápidos a la derecha).
     final wide = context.isWide;
     return SafeArea(
       child: CenteredListView(maxWidth: 1180, children: [
@@ -82,10 +76,8 @@ class DashboardScreen extends StatelessWidget {
         const SizedBox(height: 16),
 
         if (!wide) ...[
-          // Solo en la cuenta demo: explica el GPS simulado y lo trae a donde estás.
           if (c.isDemo) const _DemoCard(),
 
-          // Aviso si OTRA mascota está en emergencia
           for (final e in otherEmergencies)
             AppCard(
               color: AppTheme.danger.withValues(alpha: 0.10),
@@ -101,7 +93,6 @@ class DashboardScreen extends StatelessWidget {
               ]),
             ),
 
-          // Si hay emergencia, la tarjeta de la IA va arriba de todo.
           AnimatedSize(
             duration: const Duration(milliseconds: 350),
             curve: Curves.easeOutCubic,
@@ -119,7 +110,6 @@ class DashboardScreen extends StatelessWidget {
         ] else
           TwoColumns(
             left: [
-            // Aviso si OTRA mascota está en emergencia
             for (final e in otherEmergencies)
               AppCard(
                 color: AppTheme.danger.withValues(alpha: 0.10),
@@ -135,7 +125,6 @@ class DashboardScreen extends StatelessWidget {
                 ]),
               ),
 
-            // Si hay emergencia, la tarjeta de la IA va arriba de todo.
             AnimatedSize(
               duration: const Duration(milliseconds: 350),
               curve: Curves.easeOutCubic,
@@ -148,7 +137,6 @@ class DashboardScreen extends StatelessWidget {
             if (pet != null) const _WalkCard(),
             ],
             right: [
-            // Solo en la cuenta demo: explica el GPS simulado y lo trae a donde estás.
             if (c.isDemo) const _DemoCard(),
 
               if (c.reminders.isNotEmpty) const _RemindersCard(),
@@ -161,7 +149,6 @@ class DashboardScreen extends StatelessWidget {
   }
 }
 
-/// Tarjeta de la cuenta demo.
 class _DemoCard extends StatefulWidget {
   const _DemoCard();
   @override
@@ -227,7 +214,6 @@ class _DemoCardState extends State<_DemoCard> {
   }
 }
 
-/// Fila de mascotas: cada una en un círculo con su color; la seleccionada crece.
 class _PetSwitcher extends StatelessWidget {
   const _PetSwitcher({required this.onAdd});
   final VoidCallback onAdd;
@@ -321,7 +307,6 @@ class _SwitcherItem extends StatelessWidget {
       );
 }
 
-/// Tarjeta principal: foto con anillo que late, nombre y estado en vivo.
 class _PetHeroCard extends StatelessWidget {
   const _PetHeroCard({required this.pet, required this.tracker, required this.onMap});
   final Pet pet;
@@ -422,7 +407,6 @@ class _PetHeroCard extends StatelessWidget {
   }
 }
 
-/// Actividad de hoy: anillo de la meta + resumen de la IA.
 class _TodayCard extends StatelessWidget {
   const _TodayCard({required this.onOpen});
   final VoidCallback onOpen;
@@ -504,7 +488,6 @@ class _TodayCard extends StatelessWidget {
   }
 }
 
-/// Paseo: botón para empezar o el paseo en curso con su tiempo y distancia.
 class _WalkCard extends StatelessWidget {
   const _WalkCard();
   @override
@@ -569,7 +552,6 @@ class _WalkCard extends StatelessWidget {
   }
 }
 
-/// Recordatorios de salud que vencen pronto.
 class _RemindersCard extends StatelessWidget {
   const _RemindersCard();
   @override
@@ -600,7 +582,6 @@ class _RemindersCard extends StatelessWidget {
   }
 }
 
-/// Texto de "vence en X días".
 String dueText(HealthRecord r, AppL10n l) {
   final d = r.daysUntilDue();
   if (d == null) return '';
@@ -610,7 +591,6 @@ String dueText(HealthRecord r, AppL10n l) {
   return l.t('En $d días', 'In $d days');
 }
 
-/// Foto grande con botón de cámara para elegir una imagen.
 class PhotoButton extends StatelessWidget {
   const PhotoButton({super.key, required this.pet, required this.label, required this.onPicked, this.size = 110});
   final Pet pet;

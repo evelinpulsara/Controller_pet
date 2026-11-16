@@ -4,7 +4,6 @@ import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../tracking/presentation/app_controller.dart';
 
-/// Bienvenida de la primera vez: 3 pantallas que explican la app.
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
   @override
@@ -20,6 +19,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     await c.completeOnboarding();
     if (!mounted) return;
     Navigator.pushReplacementNamed(context, AppRoutes.nextFor(c));
+  }
+
+  @override
+  void dispose() {
+    _page.dispose();
+    super.dispose();
   }
 
   @override
@@ -91,7 +96,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               },
             ),
           ),
-          // Puntos de página
           Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             for (var i = 0; i < pages.length; i++)
               AnimatedContainer(

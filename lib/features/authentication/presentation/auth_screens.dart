@@ -5,8 +5,6 @@ import '../../../core/theme/app_theme.dart';
 import '../../tracking/presentation/app_controller.dart';
 import '../data/auth_service.dart';
 
-/// Pantalla de bienvenida: la huella aparece, un anillo se expande
-/// (como la señal del GPS) y luego entra el nombre.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
   @override

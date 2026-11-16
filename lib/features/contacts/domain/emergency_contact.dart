@@ -1,8 +1,6 @@
-/// Contacto de emergencia de una mascota.
-/// Mismos campos que la tabla `emergency_contacts` del backend.
 class EmergencyContact {
   final String id, petId, fullName, phone;
-  final String? relationship; // "Vecino", "Familiar", "Veterinario"...
+  final String? relationship;
   const EmergencyContact({
     required this.id,
     required this.petId,
@@ -11,7 +9,6 @@ class EmergencyContact {
     this.relationship,
   });
 
-  /// Solo los dígitos, con código de país (formato que pide WhatsApp).
   String get whatsappNumber => phone.replaceAll(RegExp(r'[^0-9]'), '');
 
   Map<String, dynamic> toJson() =>

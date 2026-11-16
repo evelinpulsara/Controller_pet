@@ -18,7 +18,6 @@ class SettingsScreen extends StatelessWidget {
         Text(l.settings, style: context.text.headlineSmall),
         const SizedBox(height: 14),
 
-        // Cuenta
         AppCard(
           child: Column(children: [
             Row(children: [
@@ -78,7 +77,6 @@ class SettingsScreen extends StatelessWidget {
           ]),
         ),
 
-        // Panel técnico (temas de Programación Orientada a la Web)
         AppCard(
           onTap: () => Navigator.pushNamed(context, AppRoutes.tech),
           child: Row(children: [
@@ -95,7 +93,6 @@ class SettingsScreen extends StatelessWidget {
           ]),
         ),
 
-        // Alertas
         AppCard(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
           child: Column(children: [
@@ -142,7 +139,6 @@ class SettingsScreen extends StatelessWidget {
           ]),
         ),
 
-        // Apariencia, seguimiento, unidades e idioma
         AppCard(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(l.t('Apariencia', 'Appearance'), style: context.text.titleMedium),
@@ -205,7 +201,6 @@ class SettingsScreen extends StatelessWidget {
           ]),
         ),
 
-        // Modo prueba (simulaciones del collar): SOLO en la cuenta demo.
         if (c.isDemo)
         AppCard(
           color: context.colors.line.withValues(alpha: 0.5),
@@ -290,7 +285,6 @@ class SettingsScreen extends StatelessWidget {
   }
 }
 
-/// Ventana para escribir el celular del dueño.
 Future<void> editOwnerPhone(BuildContext context) {
   final c = AppScope.of(context);
   final l = AppL10n.fromLocale(c.locale);
