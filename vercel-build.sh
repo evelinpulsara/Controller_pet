@@ -4,7 +4,8 @@
 # y genera la app en build/web, que es lo que Vercel publica.
 #
 # Variables de entorno (Vercel → Settings → Environment Variables):
-#   GEMINI_API_KEY  (opcional) clave de Gemini para el asistente de IA.
+#   BACKEND_URL     URL del backend en Render (la IA pasa por él; recomendado).
+#   GEMINI_API_KEY  (opcional, solo si NO hay backend) clave de Gemini.
 #   SUPABASE_URL / SUPABASE_KEY (opcionales) si no, se usan las del código.
 set -euo pipefail
 
@@ -27,6 +28,7 @@ flutter --version
 flutter pub get
 
 DEFINES=()
+[ -n "${BACKEND_URL:-}" ] && DEFINES+=("--dart-define=BACKEND_URL=${BACKEND_URL}")
 [ -n "${GEMINI_API_KEY:-}" ] && DEFINES+=("--dart-define=GEMINI_API_KEY=${GEMINI_API_KEY}")
 [ -n "${SUPABASE_URL:-}" ] && DEFINES+=("--dart-define=SUPABASE_URL=${SUPABASE_URL}")
 [ -n "${SUPABASE_KEY:-}" ] && DEFINES+=("--dart-define=SUPABASE_KEY=${SUPABASE_KEY}")

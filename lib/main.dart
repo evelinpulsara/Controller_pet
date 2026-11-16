@@ -14,6 +14,7 @@ import 'features/tracking/data/supabase_collar_service.dart';
 import 'core/storage/local_store.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/pet_palette.dart';
+import 'features/assistant/backend_pet_ai_service.dart';
 import 'features/assistant/gemini_pet_safety_ai_service.dart';
 import 'features/assistant/pet_safety_ai_service.dart';
 import 'features/tracking/data/future_location_services.dart';
@@ -26,15 +27,26 @@ const _geminiApiKey = String.fromEnvironment('GEMINI_API_KEY');
 /// Opcional: forzar un modelo concreto con GEMINI_MODEL en secrets.json.
 const _geminiModel = String.fromEnvironment('GEMINI_MODEL');
 
-/// Usa Gemini si hay clave; si no, el asistente local de plantillas.
-PetSafetyAiService _buildAiService() => _geminiApiKey.isEmpty
-    ? MockPetSafetyAiService()
-    : GeminiPetSafetyAiService(
+/// Dirección del backend en Render (si existe, la IA pasa por él y la app
+/// no necesita la clave de Gemini). Se define al compilar:
+///   --dart-define=BACKEND_URL=https://tu-backend.onrender.com
+const _backendUrl = String.fromEnvironment('BACKEND_URL');
+
+/// IA: backend (Render) > Gemini directo (desarrollo) > plantillas locales.
+PetSafetyAiService _buildAiService() {
+  if (_backendUrl.isNotEmpty) {
+    return BackendPetAiService(baseUrl: _backendUrl, fallback: MockPetSafetyAiService());
+  }
+  if (_geminiApiKey.isNotEmpty) {
+    return GeminiPetSafetyAiService(
         apiKey: _geminiApiKey,
         models: _geminiModel.isEmpty
             ? GeminiPetSafetyAiService.defaultModels
             : [_geminiModel, ...GeminiPetSafetyAiService.defaultModels],
         fallback: MockPetSafetyAiService());
+  }
+  return MockPetSafetyAiService();
+}
 
 /// Construye el controlador con todo lo que necesita.
 /// Aquí es donde se cambian las piezas simuladas por las reales:
