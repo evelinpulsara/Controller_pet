@@ -8,9 +8,6 @@ import '../../../shared/widgets/widgets.dart';
 import '../../tracking/data/supabase_collar_service.dart';
 import '../../tracking/presentation/app_controller.dart';
 
-/// Panel técnico: muestra, funcionando en vivo, los temas de Programación
-/// Orientada a la Web que usa la app (INP, Event Loop, Workers, tiempo real,
-/// Service Worker y patrón de rendering).
 class TechPanelScreen extends StatefulWidget {
   const TechPanelScreen({super.key});
   @override
@@ -24,7 +21,7 @@ class _TechPanelScreenState extends State<TechPanelScreen> {
   bool _runningMain = false, _runningWorker = false, _runningReal = false;
   ServiceWorkerInfo? _sw;
 
-  static const _demoPoints = 300000; // ~7 meses de un punto GPS por minuto
+  static const _demoPoints = 300000;
 
   @override
   void initState() {
@@ -36,7 +33,6 @@ class _TechPanelScreenState extends State<TechPanelScreen> {
   Future<void> _runAnalysis(bool inWorker) async {
     final c = AppScope.of(context);
     setState(() => inWorker ? _runningWorker = true : _runningMain = true);
-    // Deja que se dibuje el indicador de carga antes de empezar.
     await Future.delayed(const Duration(milliseconds: 50));
     final zones = [for (final z in c.zones) <Object>[z.latitude, z.longitude, z.radius, z.name]];
     final r = await analyzeRoute(points: const [], zones: zones, synthetic: _demoPoints, inWorker: inWorker);
@@ -96,7 +92,6 @@ class _TechPanelScreenState extends State<TechPanelScreen> {
     );
   }
 
-  // ── 1. INP ────────────────────────────────────────────────────────────────
   Widget _inpCard(AppL10n l) {
     final s = perf.inpSample;
     final inp = perf.inp;
@@ -149,7 +144,6 @@ class _TechPanelScreenState extends State<TechPanelScreen> {
             style: OutlinedButton.styleFrom(foregroundColor: AppTheme.danger, minimumSize: const Size(0, 40)),
             icon: const Icon(Icons.hourglass_bottom_rounded, size: 18),
             label: Text(l.t('Bloquear el hilo 600 ms', 'Block the thread 600 ms')),
-            // A propósito: un clic que tarda mucho en procesarse empeora el INP.
             onPressed: () => perf.blockMainThread(600),
           ),
           TextButton(onPressed: perf.reset, child: Text(l.t('Reiniciar medición', 'Reset'))),
@@ -163,7 +157,6 @@ class _TechPanelScreenState extends State<TechPanelScreen> {
     );
   }
 
-  // ── 1b. Frames (Main thread vs Raster) ────────────────────────────────────
   Widget _framesCard(AppL10n l) {
     String ms(double v) => '${v.toStringAsFixed(1)} ms';
     return _Section(
@@ -188,7 +181,6 @@ class _TechPanelScreenState extends State<TechPanelScreen> {
     );
   }
 
-  // ── 1c. Event Loop ────────────────────────────────────────────────────────
   Widget _eventLoopCard(AppL10n l) => _Section(
         icon: Icons.loop_rounded,
         title: 'Event Loop: Tasks vs Microtasks',
@@ -222,7 +214,6 @@ class _TechPanelScreenState extends State<TechPanelScreen> {
         ],
       );
 
-  // ── 3. Web Worker ─────────────────────────────────────────────────────────
   Widget _workerCard(AppL10n l, AppController c) {
     Widget result(RouteAnalysis? r, bool running, String who) {
       if (running) {
@@ -316,7 +307,6 @@ class _TechPanelScreenState extends State<TechPanelScreen> {
     );
   }
 
-  // ── 5. Tiempo real ────────────────────────────────────────────────────────
   Widget _realtimeCard(AppL10n l, AppController c) {
     final svc = c.session?.service;
     Widget transport;
@@ -365,7 +355,6 @@ class _TechPanelScreenState extends State<TechPanelScreen> {
     );
   }
 
-  // ── 3b. Service Worker ────────────────────────────────────────────────────
   Widget _serviceWorkerCard(AppL10n l) {
     final sw = _sw;
     return _Section(
@@ -404,7 +393,6 @@ class _TechPanelScreenState extends State<TechPanelScreen> {
     );
   }
 
-  // ── 4. Rendering ──────────────────────────────────────────────────────────
   Widget _renderingCard(AppL10n l) {
     final t = perf.loadTimings;
     String ms(double? v) => v == null || v <= 0 ? '—' : '${v.round()} ms';
@@ -430,7 +418,6 @@ class _TechPanelScreenState extends State<TechPanelScreen> {
     );
   }
 
-  // ── 2. APIs ───────────────────────────────────────────────────────────────
   Widget _apiCard(AppL10n l) => _Section(
         icon: Icons.hub_rounded,
         title: l.t('Comunicación y contratos de API', 'Communication & API contracts'),
@@ -478,7 +465,6 @@ class _Section extends StatelessWidget {
       );
 }
 
-/// Barra de 3 colores con la anatomía del INP.
 class _BreakdownBar extends StatelessWidget {
   const _BreakdownBar({required this.parts});
   final List<(String, double, Color)> parts;

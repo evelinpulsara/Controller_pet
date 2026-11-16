@@ -4,9 +4,7 @@ enum AlertType {
   lowBattery,
   gpsLost,
   trackerDisconnected,
-  /// Comportamiento fuera de lo normal (sin moverse mucho rato, muy rápido, de noche fuera...).
   anomaly,
-  /// Vacuna, desparasitación o cita próxima.
   healthReminder,
 }
 
@@ -14,7 +12,6 @@ class PetAlert {
   final String id, petId, message;
   final AlertType type;
   final DateTime timestamp;
-  /// Datos para armar el mensaje en el idioma elegido (nombre, zona, batería...).
   final Map<String, String> params;
   const PetAlert({required this.id, required this.petId, required this.type, required this.message, required this.timestamp, this.params = const {}});
 

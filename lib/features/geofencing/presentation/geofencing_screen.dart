@@ -11,7 +11,6 @@ import '../../../shared/widgets/widgets.dart';
 import '../../tracking/presentation/app_controller.dart';
 import '../domain/safe_zone.dart';
 
-/// Lista de zonas seguras de la mascota (casa, parque, casa de la abuela...).
 class GeofencingScreen extends StatelessWidget {
   const GeofencingScreen({super.key});
 
@@ -107,7 +106,6 @@ class GeofencingScreen extends StatelessWidget {
   }
 }
 
-/// Crear o editar una zona: toca el mapa para mover el centro.
 class ZoneEditor extends StatefulWidget {
   const ZoneEditor({super.key, this.zone});
   final SafeZone? zone;
@@ -137,6 +135,13 @@ class _ZoneEditorState extends State<ZoneEditor> {
     } else if (c.zone != null) {
       _center = LatLng(c.zone!.latitude, c.zone!.longitude);
     }
+  }
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _map.dispose();
+    super.dispose();
   }
 
   @override

@@ -1,14 +1,9 @@
-/// Tipos de registro del carnet de salud.
 enum HealthType { vaccine, deworming, vet, medication }
 
-/// Registro del carnet de salud: una vacuna, desparasitación, cita o medicamento.
-/// (En el backend: tablas `vaccinations`, `medications` y `medical_records`.)
 class HealthRecord {
   final String id, petId, title;
   final HealthType type;
-  /// Fecha en que se aplicó / fecha de la cita.
   final DateTime date;
-  /// Próxima dosis o próxima cita (para los recordatorios).
   final DateTime? nextDue;
   final String notes;
   const HealthRecord({
@@ -21,7 +16,6 @@ class HealthRecord {
     this.notes = '',
   });
 
-  /// Días que faltan para la próxima fecha (negativo = ya pasó).
   int? daysUntilDue([DateTime? now]) {
     if (nextDue == null) return null;
     final n = now ?? DateTime.now();
@@ -30,7 +24,6 @@ class HealthRecord {
     return due.difference(today).inDays;
   }
 
-  /// Necesita atención: vence en 7 días o menos (o ya venció).
   bool get needsAttention => (daysUntilDue() ?? 999) <= 7;
 
   Map<String, dynamic> toJson() => {

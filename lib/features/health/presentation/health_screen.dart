@@ -22,7 +22,6 @@ String healthTypeName(HealthType t, AppL10n l) => switch (t) {
       HealthType.medication => l.t('Medicamento', 'Medication'),
     };
 
-/// Carnet de salud: vacunas, desparasitación, citas y medicamentos, con recordatorios.
 class HealthScreen extends StatelessWidget {
   const HealthScreen({super.key});
 
@@ -55,7 +54,6 @@ class HealthScreen extends StatelessWidget {
                 SectionTitle(l.t('Próximos', 'Coming up')),
                 for (final r in c.reminders) _RecordTile(record: r, highlight: true),
               ],
-              // El resto, agrupado por tipo (sin repetir los "Próximos").
               for (final type in HealthType.values)
                 if (records.any((r) => r.type == type && !r.needsAttention)) ...[
                   SectionTitle(healthTypeName(type, l)),
@@ -109,7 +107,6 @@ class _RecordTile extends StatelessWidget {
   }
 }
 
-/// Formulario para agregar o editar un registro de salud.
 Future<void> showHealthForm(BuildContext context, {HealthRecord? record}) {
   final c = AppScope.of(context);
   final l = AppL10n.fromLocale(c.locale);

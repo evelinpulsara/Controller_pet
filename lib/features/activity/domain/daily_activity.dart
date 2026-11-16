@@ -1,11 +1,8 @@
-/// Actividad de una mascota en un día: distancia recorrida y minutos en movimiento.
 class DailyActivity {
   final String petId;
-  /// Día en formato AAAA-MM-DD.
   final String day;
   final double distanceMeters;
   final int activeSeconds;
-  /// true si son datos de ejemplo (generados desde el Modo prueba).
   final bool sample;
   const DailyActivity({
     required this.petId,

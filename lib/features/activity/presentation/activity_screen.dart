@@ -8,7 +8,6 @@ import '../../../shared/widgets/widgets.dart';
 import '../../tracking/presentation/app_controller.dart';
 import '../../walks/domain/walk.dart';
 
-/// Pestaña Actividad: meta diaria, semana y paseos.
 class ActivityScreen extends StatelessWidget {
   const ActivityScreen({super.key});
 
@@ -31,7 +30,6 @@ class ActivityScreen extends StatelessWidget {
         Text(l.t('Actividad de ${pet.name}', "${pet.name}'s activity"), style: context.text.headlineSmall),
         const SizedBox(height: 16),
 
-        // Meta del día
         AppCard(
           child: Column(children: [
             ProgressRing(
@@ -68,7 +66,6 @@ class ActivityScreen extends StatelessWidget {
           ]),
         ),
 
-        // Paseo
         if (walk == null)
           FilledButton.icon(
             onPressed: c.startWalk,
@@ -95,7 +92,6 @@ class ActivityScreen extends StatelessWidget {
           ),
         const SizedBox(height: 12),
 
-        // Semana
         SectionTitle(l.t('Últimos 7 días', 'Last 7 days')),
         AppCard(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -119,7 +115,6 @@ class ActivityScreen extends StatelessWidget {
           ]),
         ),
 
-        // Paseos
         SectionTitle(l.t('Paseos', 'Walks')),
         if (c.walks.isEmpty)
           AppCard(
@@ -194,7 +189,6 @@ class ActivityScreen extends StatelessWidget {
   }
 }
 
-/// Detalle de un paseo: la ruta en el mapa y sus números.
 class WalkDetailScreen extends StatelessWidget {
   const WalkDetailScreen({super.key, required this.walk});
   final Walk walk;

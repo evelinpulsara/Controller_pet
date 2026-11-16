@@ -23,7 +23,6 @@ class AlertsScreen extends StatelessWidget {
               ]),
               const SizedBox(height: 10),
               for (final a in alerts.take(100))
-                // Cada alerta nueva entra deslizándose desde arriba.
                 TweenAnimationBuilder<double>(
                   key: ValueKey(a.id),
                   tween: Tween(begin: 0, end: 1),

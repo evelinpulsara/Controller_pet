@@ -1,7 +1,6 @@
 import '../../../core/utils/geo_utils.dart';
 import '../../tracking/domain/location_data.dart';
 
-/// Un paseo grabado: la ruta, cuánto duró y cuánto caminó.
 class Walk {
   final String id, petId;
   final DateTime start;
@@ -21,7 +20,6 @@ class Walk {
     return d;
   }
 
-  /// Velocidad promedio en km/h.
   double get avgSpeedKmh {
     final h = duration.inSeconds / 3600;
     return h <= 0 ? 0 : (distanceMeters / 1000) / h;

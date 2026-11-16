@@ -5,7 +5,6 @@ import '../../../core/utils/geo_utils.dart';
 import '../../../shared/widgets/widgets.dart';
 import '../../tracking/presentation/app_controller.dart';
 
-/// Historial como línea de tiempo: un punto por ubicación, rojo si estaba fuera.
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({super.key});
   @override

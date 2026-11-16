@@ -1,7 +1,6 @@
-/// Zona segura de una mascota (puede tener varias: casa, parque, casa de la abuela...).
 class SafeZone {
   final String id, petId, name;
-  final double latitude, longitude, radius; // radio en metros
+  final double latitude, longitude, radius;
   final bool isEnabled;
   const SafeZone({
     required this.id,
