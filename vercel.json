@@ -3,5 +3,18 @@
   "framework": null,
   "installCommand": "echo 'Flutter se instala en vercel-build.sh'",
   "buildCommand": "bash vercel-build.sh",
-  "outputDirectory": "build/web"
+  "outputDirectory": "build/web",
+  "headers": [
+    {
+      "source": "/pettracker_sw.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache" },
+        { "key": "Service-Worker-Allowed", "value": "/" }
+      ]
+    },
+    {
+      "source": "/(index.html|flutter_bootstrap.js|main.dart.js|)",
+      "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+    }
+  ]
 }
