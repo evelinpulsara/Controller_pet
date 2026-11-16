@@ -4,13 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'pet_safety_ai_service.dart';
 
-/// Asistente de emergencias conectado a la API de Google Gemini.
-///
-/// La clave NO va escrita en el código: se lee del archivo secrets.json
-/// (que no se sube a GitHub) al correr la app con
-///   flutter run -d chrome --dart-define-from-file=secrets.json
-/// Si Gemini falla (sin internet, clave inválida, modelo saturado...),
-/// se usa [fallback] para que la app siga funcionando.
 class GeminiPetSafetyAiService implements PetSafetyAiService {
   GeminiPetSafetyAiService({
     required this.apiKey,
@@ -19,11 +12,10 @@ class GeminiPetSafetyAiService implements PetSafetyAiService {
     http.Client? client,
   }) : _client = client ?? http.Client();
 
-  /// Se prueban en orden: si uno está saturado o no existe, se usa el siguiente.
   static const defaultModels = [
-    'gemini-3-flash-preview', // mejor calidad (~3 s)
-    'gemini-3.1-flash-lite', // más rápido (~1 s)
-    'gemini-3.8-flash', // el más nuevo, pero a veces saturado
+    'gemini-3-flash-preview',
+    'gemini-3.1-flash-lite',
+    'gemini-3.8-flash',
   ];
 
   final String apiKey;
@@ -75,9 +67,6 @@ cerca de "${r.zoneName}".
     return fallback.composePoster(r);
   }
 
-  /// Resumen del día por SSE (Server-Sent Events): Gemini responde con un flujo
-  /// `text/event-stream`; cada línea `data: {...}` trae un pedacito del texto.
-  /// La app lo muestra mientras llega, sin esperar la respuesta completa.
   @override
   Stream<String> summarizeDayStream(DaySummaryInput d) async* {
     final language = d.locale == 'es' ? 'español (Latinoamérica)' : 'English';
@@ -115,11 +104,10 @@ Usa solo estos datos, no inventes lugares ni actividades. Si hubo algo inusual, 
           });
         final res = await _client.send(req).timeout(const Duration(seconds: 15));
         if (res.statusCode != 200) throw Exception('respondió ${res.statusCode}');
-        // Cada evento SSE llega como una línea "data: {json}".
         await for (final line in res.stream.transform(utf8.decoder).transform(const LineSplitter())) {
           if (!line.startsWith('data:')) continue;
           final json = jsonDecode(line.substring(5).trim());
-          if (json is! Map<String, dynamic>) continue; // validación en tiempo de ejecución
+          if (json is! Map<String, dynamic>) continue;
           final parts = (json['candidates'] as List?)?.firstOrNull?['content']?['parts'] as List?;
           for (final p in parts ?? const []) {
             if (p is Map && p['thought'] != true && p['text'] is String) {
@@ -132,7 +120,7 @@ Usa solo estos datos, no inventes lugares ni actividades. Si hubo algo inusual, 
         throw Exception('respuesta vacía');
       } catch (e) {
         debugPrint('[Asistente IA] resumen (SSE) con $model falló: $e');
-        if (text.trim().isNotEmpty) return; // ya se mostró algo útil
+        if (text.trim().isNotEmpty) return;
       }
     }
     yield await fallback.summarizeDay(d);
@@ -185,8 +173,6 @@ Datos de hoy:
                 ]
               }
             ],
-            // Límite alto: estos modelos "piensan" antes de responder y eso
-            // también cuenta; con poco espacio la respuesta sale vacía o cortada.
             'generationConfig': {
               'temperature': 0.6,
               'maxOutputTokens': 2048,

@@ -9,8 +9,6 @@ import '../../../shared/widgets/widgets.dart';
 import '../../profile/presentation/settings_screen.dart' show editOwnerPhone;
 import '../../tracking/presentation/app_controller.dart';
 
-/// Cartel de "Se busca" hecho con la foto y un texto escrito por la IA.
-/// Se puede compartir como imagen (redes, WhatsApp) o descargar.
 class PosterScreen extends StatefulWidget {
   const PosterScreen({super.key});
   @override
@@ -151,7 +149,6 @@ class _Poster extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
-    // El cartel siempre es claro (para imprimir o compartir).
     const ink = Color(0xFF1F2B29);
     return Container(
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),

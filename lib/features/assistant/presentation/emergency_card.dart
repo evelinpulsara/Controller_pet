@@ -7,7 +7,6 @@ import '../../../shared/widgets/widgets.dart';
 import '../../contacts/presentation/whatsapp.dart';
 import '../../tracking/presentation/app_controller.dart';
 
-/// Tarjeta del asistente de emergencias (IA) en la pantalla de Inicio.
 class EmergencyAssistantCard extends StatelessWidget {
   const EmergencyAssistantCard({super.key});
 
@@ -18,7 +17,6 @@ class EmergencyAssistantCard extends StatelessWidget {
     final e = c.emergency;
     final pet = c.selectedPet?.name ?? '';
 
-    // ── Sin emergencia: el asistente está vigilando ──────────────────────
     if (e == null) {
       return AppCard(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -67,7 +65,6 @@ class EmergencyAssistantCard extends StatelessWidget {
           if (!found) ...[const SizedBox(height: 4), _LostTimer(since: e.startedAt, es: l.isEs)],
           const SizedBox(height: 8),
 
-          // Aviso de la IA para el dueño
           if (e.isWriting)
             Row(children: [
               const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
@@ -79,7 +76,6 @@ class EmergencyAssistantCard extends StatelessWidget {
           else
             Text(l.petFoundBody(e.report.petName)),
 
-          // Acciones de búsqueda
           if (!found) ...[
             const SizedBox(height: 12),
             Wrap(spacing: 8, runSpacing: 8, children: [
@@ -98,7 +94,6 @@ class EmergencyAssistantCard extends StatelessWidget {
             ]),
           ],
 
-          // Mensaje preparado para los contactos
           if (!e.isWriting && !found) ...[
             const SizedBox(height: 14),
             Text(l.messageForContacts, style: const TextStyle(fontWeight: FontWeight.w700)),
@@ -111,7 +106,6 @@ class EmergencyAssistantCard extends StatelessWidget {
             ),
           ],
 
-          // Botones de WhatsApp por contacto
           if (!e.isWriting) ...[
             const SizedBox(height: 12),
             if (c.contacts.isEmpty)
@@ -181,7 +175,6 @@ class EmergencyAssistantCard extends StatelessWidget {
       ]);
 }
 
-/// "Perdido hace 12 min" (se actualiza solo).
 class _LostTimer extends StatefulWidget {
   const _LostTimer({required this.since, required this.es});
   final DateTime since;

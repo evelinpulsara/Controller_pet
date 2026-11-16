@@ -4,14 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'pet_safety_ai_service.dart';
 
-/// IA a través del BACKEND (Render). La app no conoce la clave de Gemini:
-/// le pide al backend, y el backend habla con Gemini.
-///
-///   POST {backend}/api/ai/lost-alert         -> aviso para dueño y contactos
-///   POST {backend}/api/ai/poster             -> cartel "Se busca"
-///   POST {backend}/api/ai/day-summary/stream -> resumen del día por SSE
-///
-/// Si el backend no responde (por ejemplo, Render "dormido"), usa [fallback].
 class BackendPetAiService implements PetSafetyAiService {
   BackendPetAiService({required this.baseUrl, required this.fallback, http.Client? client})
       : _client = client ?? http.Client();
@@ -36,7 +28,6 @@ class BackendPetAiService implements PetSafetyAiService {
       };
 
   Future<Map<String, dynamic>> _post(String path, Map<String, dynamic> body) async {
-    // Render (plan gratis) puede tardar en "despertar": se espera un poco más.
     final res = await _client
         .post(_u(path), headers: {'Content-Type': 'application/json'}, body: jsonEncode(body))
         .timeout(const Duration(seconds: 45));
@@ -96,7 +87,6 @@ class BackendPetAiService implements PetSafetyAiService {
     return last;
   }
 
-  /// Resumen por SSE desde el backend: cada evento trae {"text": texto acumulado}.
   @override
   Stream<String> summarizeDayStream(DaySummaryInput d) async* {
     var got = false;

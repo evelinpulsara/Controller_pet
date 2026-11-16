@@ -1,11 +1,10 @@
-/// Datos de la mascota perdida que recibe la IA para escribir los avisos.
 class LostPetReport {
   final String petName, species, breed, ownerName, zoneName;
   final int age, batteryLevel;
   final double distanceOutsideMeters;
   final double latitude, longitude;
   final DateTime time;
-  final String locale; // 'es' | 'en'
+  final String locale;
   const LostPetReport({
     required this.petName,
     required this.species,
@@ -25,24 +24,19 @@ class LostPetReport {
   String get hhmm => '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
 }
 
-/// Los dos textos que escribe la IA cuando la mascota sale de la zona segura.
 class LostPetMessages {
-  /// Aviso para el dueño, dentro de la app.
   final String ownerAlert;
-  /// Mensaje de WhatsApp para los contactos de emergencia (incluye el enlace de ubicación).
   final String contactMessage;
   final bool fromAi;
   const LostPetMessages({required this.ownerAlert, required this.contactMessage, this.fromAi = false});
 }
 
-/// Texto del cartel de "Se busca".
 class PosterText {
   final String headline, description;
   final bool fromAi;
   const PosterText({required this.headline, required this.description, this.fromAi = false});
 }
 
-/// Datos del día que la IA resume.
 class DaySummaryInput {
   final String petName, species, locale;
   final double distanceMeters, goalMeters;
@@ -64,20 +58,13 @@ class DaySummaryInput {
   });
 }
 
-/// Asistente de IA de la app.
 abstract class PetSafetyAiService {
-  /// Avisos cuando la mascota sale de la zona (para el dueño y para los contactos).
   Future<LostPetMessages> composeLostPetAlert(LostPetReport report);
-  /// Texto del cartel de "Se busca".
   Future<PosterText> composePoster(LostPetReport report);
-  /// Resumen corto de cómo fue el día de la mascota.
   Future<String> summarizeDay(DaySummaryInput day);
-  /// Igual que [summarizeDay] pero va entregando el texto a medida que se escribe
-  /// (cada evento trae el texto acumulado hasta ese momento).
   Stream<String> summarizeDayStream(DaySummaryInput day);
 }
 
-/// Versión sin IA: plantillas fijas. Se usa si no hay clave de Gemini o si Gemini falla.
 class MockPetSafetyAiService implements PetSafetyAiService {
   @override
   Future<LostPetMessages> composeLostPetAlert(LostPetReport r) async {
@@ -135,7 +122,5 @@ class MockPetSafetyAiService implements PetSafetyAiService {
   }
 }
 
-/// Agrega al mensaje el enlace de la última ubicación (lo pone la app, no la IA,
-/// para que las coordenadas siempre sean las reales).
 String withLocation(String message, LostPetReport r) =>
     '$message\n\n📍 ${r.locale == 'es' ? 'Última ubicación' : 'Last location'}: ${r.mapsLink}';
