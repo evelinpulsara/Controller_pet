@@ -37,18 +37,19 @@ class AppRoutes {
 
   static Map<String, WidgetBuilder> get routes => {
         splash: (_) => const SplashScreen(),
-        onboarding: (_) => const OnboardingScreen(),
+        onboarding: (_) => const PageFrame(maxWidth: 560, child: OnboardingScreen()),
         login: (_) => const LoginScreen(),
-        setup: (_) => const SetupWizard(),
+        setup: (_) => const PageFrame(child: SetupWizard()),
         home: (_) => const HomeShell(),
-        petProfile: (_) => const PetProfileScreen(),
-        history: (_) => const HistoryScreen(),
-        contacts: (_) => const ContactsScreen(),
-        zones: (_) => const GeofencingScreen(),
-        collar: (_) => const CollarScreen(),
-        health: (_) => const HealthScreen(),
-        poster: (_) => const PosterScreen(),
-        tech: (_) => const TechPanelScreen(),
+        // En computador estas pantallas se muestran como una columna centrada.
+        petProfile: (_) => const PageFrame(child: PetProfileScreen()),
+        history: (_) => const PageFrame(child: HistoryScreen()),
+        contacts: (_) => const PageFrame(child: ContactsScreen()),
+        zones: (_) => const PageFrame(maxWidth: 960, child: GeofencingScreen()),
+        collar: (_) => const PageFrame(child: CollarScreen()),
+        health: (_) => const PageFrame(child: HealthScreen()),
+        poster: (_) => const PageFrame(child: PosterScreen()),
+        tech: (_) => const PageFrame(maxWidth: 960, child: TechPanelScreen()),
       };
 
   /// A dónde ir después de la bienvenida o del inicio de sesión.
@@ -143,49 +144,95 @@ class _HomeShellState extends State<HomeShell> {
       const AlertsScreen(),
       const SettingsScreen(),
     ];
+    // Destinos del menú: los mismos para la barra de abajo (celular) y el menú lateral (computador).
+    Widget alertIcon(bool selected) => Badge(
+        isLabelVisible: unread > 0,
+        backgroundColor: AppTheme.danger,
+        label: Text('$unread'),
+        child: Icon(selected ? Icons.notifications_rounded : Icons.notifications_outlined));
+    final items = <(Widget, Widget, String)>[
+      (const Icon(Icons.pets_outlined), const Icon(Icons.pets_rounded), l.navHome),
+      (const Icon(Icons.map_outlined), const Icon(Icons.map_rounded), l.navMap),
+      (const Icon(Icons.insights_outlined), const Icon(Icons.insights_rounded), l.navActivity),
+      (alertIcon(false), alertIcon(true), l.navAlerts),
+      (const Icon(Icons.settings_outlined), const Icon(Icons.settings_rounded), l.navSettings),
+    ];
+    final body = AnimatedSwitcher(
+      duration: reduceMotion(context) ? Duration.zero : const Duration(milliseconds: 240),
+      switchInCurve: Curves.easeOutCubic,
+      transitionBuilder: (child, anim) => FadeTransition(
+        opacity: anim,
+        child: ScaleTransition(scale: Tween(begin: 0.985, end: 1.0).animate(anim), child: child),
+      ),
+      child: KeyedSubtree(key: ValueKey(_i), child: SizedBox.expand(child: screens[_i])),
+    );
+    final wide = context.isWide;
+    final extended = context.screenWidth >= Breakpoints.extraWide;
     return Stack(children: [
       Scaffold(
-        body: AnimatedSwitcher(
-          duration: reduceMotion(context) ? Duration.zero : const Duration(milliseconds: 240),
-          switchInCurve: Curves.easeOutCubic,
-          transitionBuilder: (child, anim) => FadeTransition(
-            opacity: anim,
-            child: ScaleTransition(scale: Tween(begin: 0.985, end: 1.0).animate(anim), child: child),
-          ),
-          child: KeyedSubtree(key: ValueKey(_i), child: SizedBox.expand(child: screens[_i])),
-        ),
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: _i,
-          onDestinationSelected: _go,
-          destinations: [
-            NavigationDestination(
-                icon: const Icon(Icons.pets_outlined), selectedIcon: const Icon(Icons.pets_rounded), label: l.navHome),
-            NavigationDestination(
-                icon: const Icon(Icons.map_outlined), selectedIcon: const Icon(Icons.map_rounded), label: l.navMap),
-            NavigationDestination(
-                icon: const Icon(Icons.insights_outlined),
-                selectedIcon: const Icon(Icons.insights_rounded),
-                label: l.navActivity),
-            NavigationDestination(
-                icon: Badge(
-                    isLabelVisible: unread > 0,
-                    backgroundColor: AppTheme.danger,
-                    label: Text('$unread'),
-                    child: const Icon(Icons.notifications_outlined)),
-                selectedIcon: Badge(
-                    isLabelVisible: unread > 0,
-                    backgroundColor: AppTheme.danger,
-                    label: Text('$unread'),
-                    child: const Icon(Icons.notifications_rounded)),
-                label: l.navAlerts),
-            NavigationDestination(
-                icon: const Icon(Icons.settings_outlined),
-                selectedIcon: const Icon(Icons.settings_rounded),
-                label: l.navSettings),
-          ],
-        ),
+        body: wide
+            // Computador / tablet: menú lateral a la izquierda.
+            ? Row(children: [
+                NavigationRail(
+                  selectedIndex: _i,
+                  onDestinationSelected: _go,
+                  extended: extended,
+                  minExtendedWidth: 220,
+                  backgroundColor: context.colors.surface,
+                  labelType: extended ? NavigationRailLabelType.none : NavigationRailLabelType.all,
+                  selectedLabelTextStyle:
+                      context.text.titleSmall?.copyWith(color: context.accent, fontWeight: FontWeight.w700),
+                  unselectedLabelTextStyle: context.text.titleSmall?.copyWith(color: context.colors.muted),
+                  leading: Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 12, 8, 20),
+                    child: _RailLogo(extended: extended),
+                  ),
+                  destinations: [
+                    for (final (icon, selected, label) in items)
+                      NavigationRailDestination(icon: icon, selectedIcon: selected, label: Text(label)),
+                  ],
+                ),
+                VerticalDivider(width: 1, thickness: 1, color: context.colors.line),
+                Expanded(child: body),
+              ])
+            : body,
+        // Celular: barra de pestañas abajo.
+        bottomNavigationBar: wide
+            ? null
+            : NavigationBar(
+                selectedIndex: _i,
+                onDestinationSelected: _go,
+                destinations: [
+                  for (final (icon, selected, label) in items)
+                    NavigationDestination(icon: icon, selectedIcon: selected, label: label),
+                ],
+              ),
       ),
       if (_confetti) Positioned.fill(child: Confetti(onDone: () => setState(() => _confetti = false))),
     ]);
+  }
+}
+
+/// Logo de la app arriba del menú lateral.
+class _RailLogo extends StatelessWidget {
+  const _RailLogo({required this.extended});
+  final bool extended;
+  @override
+  Widget build(BuildContext context) {
+    final logo = Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(color: context.accent, shape: BoxShape.circle),
+      child: const Icon(Icons.pets_rounded, color: Colors.white, size: 24),
+    );
+    if (!extended) return logo;
+    return SizedBox(
+      width: 196,
+      child: Row(children: [
+        logo,
+        const SizedBox(width: 12),
+        Text('PetTracker', style: context.text.titleLarge),
+      ]),
+    );
   }
 }
