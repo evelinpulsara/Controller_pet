@@ -4,24 +4,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/validation/collar_data.dart';
 import '../domain/location_data.dart';
 
-/// Cómo llegan las ubicaciones del collar a la app.
 enum CollarTransport {
-  /// Conectando...
   connecting,
-  /// WebSocket (Supabase Realtime): la base avisa en cuanto llega una ubicación.
   websocket,
-  /// Short polling: la app pregunta cada pocos segundos (respaldo).
   polling,
 }
 
-/// Collar REAL leído desde Supabase.
-/// El collar (por ejemplo un Arduino) envía su ubicación a la función
-/// `pettracker.report_location`. La app se entera así:
-///  1. WebSocket con Supabase Realtime (conexión persistente, bidireccional):
-///     la base empuja cada fila nueva de location_history al instante.
-///  2. Si el WebSocket no está disponible, Short Polling (pregunta cada 5 s).
-/// Aunque el WebSocket funcione, se hace una consulta de respaldo cada 30 s
-/// por si se perdió algún mensaje.
 class SupabaseCollarService extends LocationService {
   SupabaseCollarService(this._db, this.petId);
   final SupabaseClient _db;
@@ -37,12 +25,11 @@ class SupabaseCollarService extends LocationService {
 
   void _emit(LocationData l) {
     if (_ctrl.isClosed) return;
-    if (_last != null && !l.timestamp.isAfter(_last!)) return; // ya la teníamos
+    if (_last != null && !l.timestamp.isAfter(_last!)) return;
     _last = l.timestamp;
     _ctrl.add(l);
   }
 
-  /// Última ubicación guardada (o error si el collar nunca ha enviado nada).
   @override
   Future<LocationData> getCurrentLocation() async {
     final r = await _db
@@ -100,7 +87,6 @@ class SupabaseCollarService extends LocationService {
 
   void _restartTimer() {
     _timer?.cancel();
-    // Con WebSocket solo hace falta una revisión de respaldo de vez en cuando.
     final every = transport.value == CollarTransport.websocket ? const Duration(seconds: 30) : _pollEvery;
     _timer = Timer.periodic(every, (_) => _poll());
   }
@@ -117,7 +103,6 @@ class SupabaseCollarService extends LocationService {
         if (l != null) _emit(l);
       }
     } catch (_) {
-      // Sin internet: se vuelve a intentar en la próxima vuelta.
     } finally {
       _busy = false;
     }

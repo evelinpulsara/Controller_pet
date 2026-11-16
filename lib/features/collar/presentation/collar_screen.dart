@@ -5,8 +5,6 @@ import '../../../core/utils/geo_utils.dart';
 import '../../../shared/widgets/widgets.dart';
 import '../../tracking/presentation/app_controller.dart';
 
-/// "Mi collar": batería, señal, última conexión, modo ahorro y vincular otro collar.
-/// Esta pantalla queda lista para cuando conectes el GPS real.
 class CollarScreen extends StatelessWidget {
   const CollarScreen({super.key});
 
@@ -44,7 +42,6 @@ class CollarScreen extends StatelessWidget {
             ]),
           )
         else ...[
-        // Batería grande
         Center(
           child: ProgressRing(
             progress: t.batteryLevel / 100,

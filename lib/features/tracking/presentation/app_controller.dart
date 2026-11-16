@@ -25,13 +25,8 @@ import '../../walks/domain/walk.dart';
 import '../domain/location_data.dart';
 import 'pet_session.dart';
 
-/// Crea el servicio de ubicación del collar de una mascota.
-/// Hoy devuelve un collar simulado; con el GPS real, devuelve el servicio real.
-/// [demo] = true solo en la cuenta demo (collar simulado).
 typedef CollarFactory = LocationService Function(Pet pet, double homeLat, double homeLng, bool demo);
 
-/// Controlador principal: usuario, mascotas, configuración y una
-/// [PetSession] por mascota (todas vigiladas al mismo tiempo).
 class AppController extends ChangeNotifier implements PetSessionListener {
   AppController({
     required this.store,
@@ -52,16 +47,12 @@ class AppController extends ChangeNotifier implements PetSessionListener {
   })  : sound = sound ?? SilentAlertSound(),
         storageMode = storageMode ?? StorageMode();
 
-  /// Inicio de sesión de las cuentas reales (Supabase). null = sin conexión a Supabase.
   final AuthService? auth;
 
-  /// Dónde se guardan los datos: demo -> dispositivo; cuentas reales -> Supabase.
   final StorageMode storageMode;
 
-  /// ¿Los datos de este usuario se guardan en Supabase?
   bool get usesCloud => storageMode.remote;
 
-  /// Alarma y timbre de la app.
   final AlertSound sound;
 
   final LocalStore store;
@@ -77,45 +68,35 @@ class AppController extends ChangeNotifier implements PetSessionListener {
   final PetSafetyAiService aiService;
   final CollarFactory collarFactory;
 
-  /// Cuenta demo: la única con collar simulado, datos de ejemplo y Modo prueba.
   static const demoEmail = 'demo@pettracker.app';
   static const demoPassword = 'demo1234';
 
   User? user;
   List<Pet> pets = [];
 
-  // ── Ubicación del dueño (punto azul) ──────────────────────────────────────
   LatLng? ownerPosition;
   double? ownerAccuracy;
   StreamSubscription<OwnerFix>? _ownerSub;
   bool get ownerTracking => _ownerSub != null;
   bool _relocating = false;
 
-  /// ¿Es la cuenta demo?
   bool get isDemo => user?.email.toLowerCase() == demoEmail;
 
-  /// Identificador del espacio de datos de cada usuario (según su correo).
   static String userIdFor(String email) => email.trim().toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '_');
   final Map<String, PetSession> sessions = {};
   String? _selectedId;
 
-  // Configuración (se guarda en el dispositivo)
   bool notifyZone = true, notifyBattery = true, metric = true;
   int intervalSeconds = 3;
   String locale = 'es';
   ThemeMode themeMode = ThemeMode.system;
   String ownerPhone = '';
   bool onboarded = false;
-  /// Sonar la alarma con las alertas importantes.
   bool soundEnabled = true;
 
-  /// Sube en 1 cada vez que una mascota vuelve a casa tras una emergencia (para celebrar).
   int celebrateTick = 0;
   String celebratePetName = '';
 
-  // ── Arranque ──────────────────────────────────────────────────────────────
-
-  /// Carga la configuración y, si había sesión abierta, la recupera.
   Future<void> init() async {
     final s = store.readGlobal('settings');
     if (s is Map) {
@@ -133,7 +114,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     if (u is Map) {
       final email = (u['email'] as String).toLowerCase();
       final demo = email == demoEmail;
-      // Cuenta real: solo se recupera si Supabase todavía tiene la sesión abierta.
       if (!demo && auth != null && auth!.currentEmail?.toLowerCase() != email) {
         await store.removeGlobal('user');
       } else {
@@ -162,12 +142,9 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     notifyListeners();
   }
 
-  /// Para probar desde Ajustes cómo suena.
   void testAlarm() => sound.alarm();
   void testChime() => sound.chime();
 
-  /// Inicia sesión (o crea la cuenta con [register]).
-  /// La cuenta demo es local; las demás usan Supabase si está configurado.
   Future<LoginResult> login(String email, String password, {bool register = false}) async {
     final clean = email.trim().toLowerCase();
     if (!clean.contains('@') || password.length < 4) return const LoginResult(LoginStatus.invalid);
@@ -188,7 +165,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     store.setScope(user!.id);
     _clearCaches();
     try {
-      // Solo la cuenta demo trae mascotas y datos de ejemplo. Los demás empiezan de cero.
       if (demo && (await petRepository.getPets()).isEmpty) await _seedDemo();
       await _loadPets();
     } catch (e) {
@@ -216,7 +192,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     notifyListeners();
   }
 
-  /// Primera vez: falta registrar la primera mascota.
   bool get needsSetup => user != null && pets.isEmpty;
 
   Future<void> completeOnboarding() async {
@@ -237,7 +212,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
 
   Future<void> _startSession(Pet p) async {
     var tracker = await trackerRepository.getTracker(p.trackerId);
-    // En la demo, el collar simulado arranca conectado y con batería.
     if (isDemo && tracker.batteryLevel == 0 && !tracker.isConnected) {
       tracker = tracker.copyWith(batteryLevel: 100, isConnected: true, lastUpdate: DateTime.now());
       await trackerRepository.saveTracker(tracker);
@@ -273,8 +247,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
 
   Duration _intervalFor(TrackerDevice t) => Duration(seconds: intervalSeconds * (t.powerSave ? 3 : 1));
 
-  // ── Mascota seleccionada (lo que muestran las pantallas) ─────────────────
-
   PetSession? get session => _selectedId == null ? null : sessions[_selectedId];
   Pet? get selectedPet => session?.pet;
   TrackerDevice? get tracker => session?.tracker;
@@ -294,7 +266,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
   bool get simulateFrozen => session?.simulateFrozen ?? false;
   bool get simulateSpeeding => session?.simulateSpeeding ?? false;
 
-  /// Emergencias activas de TODAS las mascotas.
   List<PetEmergency> get activeEmergencies =>
       [for (final s in sessions.values) if (s.emergency?.isActive == true) s.emergency!];
 
@@ -309,7 +280,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     if (p.isNotEmpty) selectPet(p.first);
   }
 
-  /// Agrega una mascota (y opcionalmente su primera zona segura).
   Future<void> addPet(Pet p, {SafeZone? homeZone}) async {
     await petRepository.addPet(p);
     if (homeZone != null) await safeZoneRepository.saveZone(homeZone);
@@ -318,7 +288,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     await selectPet(p);
   }
 
-  /// Cambia foto, color u otros datos de la mascota.
   Future<void> updatePet(Pet p) async {
     await petRepository.updatePet(p);
     pets = await petRepository.getPets();
@@ -334,13 +303,10 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     notifyListeners();
   }
 
-  // ── Configuración ─────────────────────────────────────────────────────────
-
   void setLocale(String loc) {
     locale = loc;
     _saveSettings();
     notifyListeners();
-    // Si hay emergencias activas, la IA reescribe los mensajes en el nuevo idioma.
     for (final s in sessions.values) {
       final e = s.emergency;
       if (e != null && e.isActive && !e.isWriting) _composeMessages(s, e);
@@ -373,9 +339,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     notifyListeners();
   }
 
-  // ── Collar ────────────────────────────────────────────────────────────────
-
-  /// Vincula un collar nuevo (por su código) a la mascota seleccionada.
   Future<void> linkCollar(String code) async {
     final s = session;
     if (s == null) return;
@@ -387,8 +350,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     notifyListeners();
   }
 
-  /// Le pone una clave secreta al collar para que pueda enviar su ubicación
-  /// a Supabase (lo usa el GPS real, por ejemplo con Arduino).
   Future<void> setCollarKey(String key) async {
     final s = session;
     final r = trackerRepository;
@@ -408,8 +369,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     notifyListeners();
   }
 
-  // ── Zonas ─────────────────────────────────────────────────────────────────
-
   Future<void> saveZone(SafeZone z) async {
     final s = session;
     if (s == null) return;
@@ -419,8 +378,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     final oldHome = s.homeZone;
     await safeZoneRepository.saveZone(zone);
     s.zones = await safeZoneRepository.getZones(s.pet.id);
-    // Si cambiaste dónde está la casa, el collar de PRUEBA se muda allí
-    // (con el collar real no hace falta: el GPS dice dónde está de verdad).
     final movedHome = oldHome != null &&
         oldHome.id == zone.id &&
         GeoUtils.distanceMeters(oldHome.latitude, oldHome.longitude, zone.latitude, zone.longitude) > 30;
@@ -439,11 +396,9 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     notifyListeners();
   }
 
-  // ── Simulaciones (Modo prueba) ────────────────────────────────────────────
-
   void setSimulateLeaving(bool v) {
     final s = session;
-    if (s == null || !isDemo) return; // solo en la cuenta demo
+    if (s == null || !isDemo) return;
     s.simulateLeaving = v;
     s.mock?.escaping = v;
     notifyListeners();
@@ -451,7 +406,7 @@ class AppController extends ChangeNotifier implements PetSessionListener {
 
   void setSimulateFrozen(bool v) {
     final s = session;
-    if (s == null || !isDemo) return; // solo en la cuenta demo
+    if (s == null || !isDemo) return;
     s.simulateFrozen = v;
     s.mock?.frozen = v;
     notifyListeners();
@@ -459,7 +414,7 @@ class AppController extends ChangeNotifier implements PetSessionListener {
 
   void setSimulateSpeeding(bool v) {
     final s = session;
-    if (s == null || !isDemo) return; // solo en la cuenta demo
+    if (s == null || !isDemo) return;
     s.simulateSpeeding = v;
     s.mock?.speeding = v;
     notifyListeners();
@@ -467,7 +422,7 @@ class AppController extends ChangeNotifier implements PetSessionListener {
 
   void toggleDisconnect() {
     final s = session;
-    if (s == null || !isDemo) return; // solo en la cuenta demo
+    if (s == null || !isDemo) return;
     s.tracker = s.tracker.copyWith(isConnected: !s.tracker.isConnected);
     if (!s.tracker.isConnected) {
       _raise(s, AlertType.trackerDisconnected, {'tracker': s.tracker.id, 'pet': s.pet.name});
@@ -475,10 +430,9 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     notifyListeners();
   }
 
-  /// Llena la última semana con datos de EJEMPLO (marcados como tal) para ver los gráficos.
   Future<void> fillSampleWeek() async {
     final s = session;
-    if (s == null || !isDemo) return; // solo en la cuenta demo
+    if (s == null || !isDemo) return;
     final rnd = Random();
     final now = DateTime.now();
     for (var i = 1; i <= 6; i++) {
@@ -495,9 +449,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     notifyListeners();
   }
 
-  // ── Ubicación del dueño ───────────────────────────────────────────────────
-
-  /// Empieza a seguir tu ubicación (después de que diste permiso y llegó [first]).
   void startOwnerTracking(OwnerFix first) {
     store.setBool('ownerLoc', true);
     _setOwner(first);
@@ -521,7 +472,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     ownerAccuracy = null;
   }
 
-  /// Si ya habías dado permiso antes, vuelve a mostrar tu ubicación sola.
   Future<void> _resumeOwnerTracking() async {
     final fix = await OwnerLocation.current();
     if (fix.ok && user != null && !_disposed) startOwnerTracking(fix);
@@ -531,11 +481,9 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     ownerPosition = f.position;
     ownerAccuracy = f.accuracyMeters;
     notifyListeners();
-    // Demo: la primera vez, la demo se muda a donde estás.
     if (isDemo && store.getBool('demoPlaced') != true && f.position != null) relocateDemoTo(f.position!);
   }
 
-  /// Mueve toda la demo (casa, zonas, paseos y collares simulados) a [to].
   Future<void> relocateDemoTo(LatLng to) async {
     if (!isDemo || _relocating) return;
     final home = sessions.values.map((s) => s.homeZone).whereType<SafeZone>().firstOrNull;
@@ -556,15 +504,13 @@ class AppController extends ChangeNotifier implements PetSessionListener {
           ]));
         }
         sessions.remove(s.pet.id)?.stop();
-        await _startSession(s.pet); // el collar simulado arranca en la nueva casa
+        await _startSession(s.pet);
       }
     } finally {
       _relocating = false;
       notifyListeners();
     }
   }
-
-  // ── Cuenta demo ───────────────────────────────────────────────────────────
 
   void _clearCaches() {
     final r = locationRepository;
@@ -573,7 +519,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     } catch (_) {}
   }
 
-  /// Deja la cuenta demo como nueva (con sus datos de ejemplo).
   Future<void> resetDemo() async {
     if (!isDemo) return;
     for (final s in sessions.values) {
@@ -584,7 +529,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     _clearCaches();
     await _seedDemo();
     await _loadPets();
-    // Si compartes tu ubicación, la demo nueva aparece donde estás.
     if (ownerTracking) {
       await store.setBool('ownerLoc', true);
       if (ownerPosition != null) await relocateDemoTo(ownerPosition!);
@@ -592,7 +536,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     notifyListeners();
   }
 
-  /// Datos de ejemplo de la cuenta demo (en Pasto, Colombia).
   Future<void> _seedDemo() async {
     const lat = AppConstants.homeLatitude, lng = AppConstants.homeLongitude;
     final now = DateTime.now();
@@ -618,7 +561,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     ]) {
       await healthRepository.saveRecord(r);
     }
-    // Semana de actividad de ejemplo
     final rnd = Random(7);
     for (final p in [luna, iker]) {
       for (var i = 1; i <= 6; i++) {
@@ -631,7 +573,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
         ));
       }
     }
-    // Un paseo de ejemplo de ayer (una vuelta a la manzana)
     final start = now.subtract(const Duration(days: 1, hours: 2));
     await walkRepository.saveWalk(Walk(
       id: 'w-demo-1', petId: 'demo-luna', start: start, end: start.add(const Duration(minutes: 24)),
@@ -647,14 +588,12 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     ));
   }
 
-  // ── Listener de las sesiones ─────────────────────────────────────────────
-
   @override
   void onSessionChanged(PetSession s) => notifyListeners();
 
   @override
   void onLeftAllZones(PetSession s) {
-    if (s.activeWalk != null) return; // de paseo con su dueño: no es emergencia
+    if (s.activeWalk != null) return;
     if (!notifyZone) return;
     _raise(s, AlertType.leftSafeZone, {'pet': s.pet.name, 'zone': s.nearestZoneName});
     if (s.isNight) _raise(s, AlertType.anomaly, {'kind': 'night', 'pet': s.pet.name});
@@ -704,7 +643,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     notifyListeners();
   }
 
-  /// Alarma fuerte para lo urgente; timbre suave para lo que solo informa.
   void _playFor(AlertType type) {
     if (!soundEnabled) return;
     switch (type) {
@@ -713,7 +651,7 @@ class AppController extends ChangeNotifier implements PetSessionListener {
       case AlertType.enteredSafeZone || AlertType.lowBattery || AlertType.gpsLost:
         sound.chime();
       case AlertType.healthReminder:
-        break; // se muestra en pantalla, sin sonido
+        break;
     }
   }
 
@@ -731,9 +669,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     notifyListeners();
   }
 
-  // ── Emergencias (IA) ─────────────────────────────────────────────────────
-
-  /// La mascota salió de todas sus zonas: la IA escribe los avisos.
   void _startEmergency(PetSession s, {bool manual = false}) {
     if (s.emergency?.isActive == true) return;
     final now = DateTime.now();
@@ -745,14 +680,12 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     _composeMessages(s, e);
   }
 
-  /// "Mi mascota se perdió": activa la emergencia a mano.
   void startLostMode() {
     final s = session;
     if (s == null) return;
     _startEmergency(s, manual: true);
   }
 
-  /// "¡Ya apareció!": termina la emergencia y celebra.
   void markFound() {
     final s = session;
     final e = s?.emergency;
@@ -784,7 +717,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     notifyListeners();
   }
 
-  /// Genera (con IA) el texto del cartel de "Se busca".
   Future<void> requestPoster() async {
     final s = session;
     final e = s?.emergency;
@@ -799,7 +731,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     }
   }
 
-  /// Mensaje para los contactos, con la ubicación más reciente.
   String contactMessageNow([PetSession? which]) {
     final s = which ?? session;
     final e = s?.emergency;
@@ -830,8 +761,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     notifyListeners();
   }
 
-  // ── Contactos ─────────────────────────────────────────────────────────────
-
   Future<void> addContact(EmergencyContact ct) async {
     await contactRepository.addContact(ct);
     final s = sessions[ct.petId];
@@ -846,8 +775,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     s.contacts = await contactRepository.getContacts(s.pet.id);
     notifyListeners();
   }
-
-  // ── Paseos ────────────────────────────────────────────────────────────────
 
   void startWalk() {
     final s = session;
@@ -881,12 +808,9 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     notifyListeners();
   }
 
-  // ── Actividad ─────────────────────────────────────────────────────────────
-
   DailyActivity get today =>
       session?.today ?? DailyActivity(petId: '', day: DailyActivity.keyFor(DateTime.now()));
 
-  /// Los últimos 7 días (de más antiguo a hoy), con 0 en los días sin datos.
   List<DailyActivity> get lastSevenDays {
     final s = session;
     if (s == null) return const [];
@@ -906,7 +830,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     return walks.where((w) => DailyActivity.keyFor(w.start) == k).toList();
   }
 
-  /// Pide a la IA el resumen del día.
   Future<void> requestDaySummary() async {
     final s = session;
     if (s == null || s.summaryLoading) return;
@@ -917,7 +840,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     final alertsToday = s.alerts.where((a) => DailyActivity.keyFor(a.timestamp) == k).toList();
     final l = AppL10n.fromLocale(locale);
     try {
-      // Llega por partes (SSE): se muestra mientras la IA escribe.
       final stream = aiService.summarizeDayStream(DaySummaryInput(
         petName: s.pet.name,
         species: s.pet.species,
@@ -937,7 +859,7 @@ class AppController extends ChangeNotifier implements PetSessionListener {
       await for (final partial in stream) {
         s.daySummary = partial;
         s.daySummaryDay = k;
-        s.summaryLoading = false; // ya hay texto: se muestra mientras sigue llegando
+        s.summaryLoading = false;
         notifyListeners();
       }
       s.daySummaryDay = k;
@@ -952,8 +874,6 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     if (p == null) return;
     await updatePet(p.copyWith(dailyGoalMeters: meters));
   }
-
-  // ── Salud ─────────────────────────────────────────────────────────────────
 
   Future<void> saveHealthRecord(HealthRecord r) async {
     await healthRepository.saveRecord(r);
@@ -973,11 +893,9 @@ class AppController extends ChangeNotifier implements PetSessionListener {
     notifyListeners();
   }
 
-  /// Recordatorios: lo que vence en 7 días o menos (o ya venció).
   List<HealthRecord> get reminders =>
       health.where((r) => r.needsAttention).toList()..sort((a, b) => a.nextDue!.compareTo(b.nextDue!));
 
-  /// Crea una alerta (una vez al día) por cada cosa de salud que esté por vencer.
   void _checkHealthReminders(PetSession s) {
     final today = DailyActivity.keyFor(DateTime.now());
     for (final r in s.health.where((r) => r.needsAttention)) {

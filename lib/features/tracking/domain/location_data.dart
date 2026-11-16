@@ -1,7 +1,6 @@
 class LocationData {
   final double latitude, longitude, accuracy;
   final DateTime timestamp;
-  /// Batería del collar en ese momento (si el collar la envía).
   final int? battery;
   const LocationData({required this.latitude, required this.longitude, required this.timestamp, required this.accuracy, this.battery});
 
@@ -25,8 +24,6 @@ class LocationHistory {
         location: LocationData.fromJson(Map<String, dynamic>.from(j['loc'])));
 }
 
-/// Fuente de ubicaciones de UN collar. Hoy es simulada ([MockLocationService]);
-/// cuando el GPS real esté listo, se cambia por una que lea del collar o del backend.
 abstract class LocationService {
   Future<LocationData> getCurrentLocation();
   Stream<LocationData> watchLocation();

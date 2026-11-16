@@ -12,7 +12,6 @@ import '../../walks/domain/walk.dart';
 import '../data/mock_location_service.dart';
 import '../domain/location_data.dart';
 
-/// Eventos que la sesión de una mascota le avisa al controlador.
 abstract class PetSessionListener {
   void onSessionChanged(PetSession s);
   void onLeftAllZones(PetSession s);
@@ -24,9 +23,6 @@ abstract class PetSessionListener {
   void onWalkPoint(PetSession s);
 }
 
-/// Todo lo que se vigila de UNA mascota: su collar, sus zonas, su recorrido,
-/// su actividad, sus alertas y su emergencia. Cada mascota tiene la suya y
-/// todas funcionan al mismo tiempo, aunque estés viendo otra.
 class PetSession {
   PetSession({
     required this.pet,
@@ -59,17 +55,14 @@ class PetSession {
   PetEmergency? emergency;
   Walk? activeWalk;
 
-  // Simulación (solo con el collar de prueba)
   bool simulateLeaving = false, simulateFrozen = false, simulateSpeeding = false;
 
-  // Resumen del día escrito por la IA
   String? daySummary;
   String? daySummaryDay;
   bool summaryLoading = false;
 
   StreamSubscription<LocationData>? _sub;
   LocationData? _prev;
-  /// Último punto donde se confirmó movimiento (para filtrar el ruido del GPS).
   LocationData? _anchor;
   int _ticks = 0;
   bool _lowBatteryRaised = false;
@@ -79,16 +72,13 @@ class PetSession {
   DateTime? _lastGpsLost;
   DateTime? _lastSpeedAlert;
   final List<LocationData> _speedWindow = [];
-  /// Ventana de tiempo para medir la velocidad.
   static const speedWindow = Duration(seconds: 8);
   int _secondsOutsideToday = 0;
   final Set<String> _placesToday = {};
 
   MockLocationService? get mock => service is MockLocationService ? service as MockLocationService : null;
 
-  /// Cuánto tiempo sin moverse antes de avisar.
   static const stationaryLimit = Duration(minutes: 3);
-  /// Velocidad (km/h) a partir de la cual se considera inusual.
   static const fastKmh = 25.0;
 
   bool _stopped = false;
@@ -102,7 +92,6 @@ class PetSession {
       _updateInside(l, raise: false);
       listener.onSessionChanged(this);
     }, onError: (_) {
-      // Collar real sin señal todavía: no pasa nada hasta que llegue una ubicación.
     });
   }
 
@@ -113,14 +102,10 @@ class PetSession {
     service.dispose();
   }
 
-  // ── Zonas ─────────────────────────────────────────────────────────────────
-
   List<SafeZone> get enabledZones => zones.where((z) => z.isEnabled).toList();
 
-  /// Zona principal (la primera, normalmente "Casa").
   SafeZone? get homeZone => zones.isEmpty ? null : zones.first;
 
-  /// Zona donde está ahora (null = fuera de todas).
   SafeZone? get currentZone {
     final l = current;
     if (l == null) return null;
@@ -133,24 +118,20 @@ class PetSession {
   double _dist(SafeZone z, LocationData l) =>
       GeoUtils.distanceMeters(z.latitude, z.longitude, l.latitude, l.longitude);
 
-  /// ¿Esta ubicación está dentro de alguna zona activa?
   bool isInsideZones(LocationData l) => enabledZones.isEmpty || enabledZones.any((z) => _dist(z, l) <= z.radius);
 
-  /// Distancia al centro de la zona principal.
   double? get distanceFromHome {
     final h = homeZone, l = current;
     if (h == null || l == null) return null;
     return _dist(h, l);
   }
 
-  /// Cuántos metros está por fuera de la zona más cercana (0 si está dentro).
   double get metersOutside {
     final l = current;
     if (l == null || enabledZones.isEmpty) return 0;
     return enabledZones.map((z) => max(0.0, _dist(z, l) - z.radius)).reduce(min);
   }
 
-  /// Nombre de la zona más cercana (para los mensajes).
   String get nearestZoneName {
     final l = current;
     if (l == null || zones.isEmpty) return '';
@@ -168,14 +149,11 @@ class PetSession {
     if (!was && insideZone) listener.onBackInZone(this);
   }
 
-  // ── Actividad del día ─────────────────────────────────────────────────────
-
   DailyActivity get today {
     final k = DailyActivity.keyFor(DateTime.now());
     return activity.firstWhere((d) => d.day == k, orElse: () => DailyActivity(petId: pet.id, day: k));
   }
 
-  /// Minutos fuera de sus zonas hoy (si estuvo fuera aunque sea un momento, cuenta 1).
   int get minutesOutsideToday => (_secondsOutsideToday / 60).ceil();
   List<String> get placesToday => _placesToday.toList();
 
@@ -185,17 +163,12 @@ class PetSession {
     if (_ticks % 10 == 0) listener.onActivityChanged(this, t);
   }
 
-  // ── Cada vez que llega una ubicación del collar ───────────────────────────
-
-  /// true cuando ya llegó al menos una ubicación del collar.
   bool get hasSignal => current != null;
 
   void _onLocation(LocationData l) {
     if (_stopped) return;
     if (!tracker.isConnected) {
-      // Collar de prueba "desconectado" (Modo prueba): se ignora.
       if (mock != null) return;
-      // Collar real: si llega una ubicación, es que está conectado.
       tracker = tracker.copyWith(isConnected: true);
     }
     final prev = _prev ?? current;
@@ -203,18 +176,14 @@ class PetSession {
     _prev = l;
     _ticks++;
 
-    // Batería y señal (en el collar real las envía el dispositivo).
-    // El collar real envía su batería; el de prueba la va bajando poco a poco.
     var battery = l.battery ?? tracker.batteryLevel;
     if (mock != null && _ticks % (tracker.powerSave ? 8 : 4) == 0 && battery > 1) battery--;
     final signal = l.accuracy > 25 ? 1 : (l.accuracy > 10 ? 3 : 4);
     tracker = tracker.copyWith(batteryLevel: battery, lastUpdate: l.timestamp, signal: signal);
     if (_ticks % 10 == 0) listener.onTrackerChanged(this);
 
-    // Movimiento y actividad. Para no contar el "temblor" del GPS como pasos,
-    // solo se suma cuando se aleja 3 m o más del último punto confirmado.
     final reliable = l.accuracy <= 25;
-    double step = 0; // distancia desde la ubicación anterior (para la velocidad)
+    double step = 0;
     int ms = 0;
     if (prev != null && reliable) {
       step = GeoUtils.distanceMeters(prev.latitude, prev.longitude, l.latitude, l.longitude);
@@ -238,11 +207,9 @@ class PetSession {
     }
     final seconds = (ms / 1000).ceil();
 
-    // Zonas
     _updateInside(l, raise: true);
     if (!insideZone) _secondsOutsideToday += max(1, seconds);
 
-    // Paseo en curso
     final w = activeWalk;
     if (w != null) {
       activeWalk = w.copyWith(points: [...w.points, l]);
@@ -269,9 +236,7 @@ class PetSession {
     listener.onSessionChanged(this);
   }
 
-  /// Detección de comportamiento inusual comparando con lo normal.
   void _checkUnusual(LocationData l, LocationData? prev, double step, int ms) {
-    // 1) Mucho tiempo sin moverse
     if (!_stationaryRaised && l.timestamp.difference(_lastMoved) >= stationaryLimit) {
       _stationaryRaised = true;
       listener.onAlert(this, AlertType.anomaly, {
@@ -280,9 +245,6 @@ class PetSession {
         'minutes': '${l.timestamp.difference(_lastMoved).inMinutes}',
       });
     }
-    // 2) Se mueve demasiado rápido (¿va en un carro? ¿huye asustado?)
-    //    La velocidad se mide en una ventana de ~8 segundos para que el
-    //    "temblor" del GPS se promedie y no parezca velocidad.
     if (l.accuracy <= 25) _speedWindow.add(l);
     while (_speedWindow.length > 2 && l.timestamp.difference(_speedWindow[1].timestamp) >= speedWindow) {
       _speedWindow.removeAt(0);
@@ -301,7 +263,6 @@ class PetSession {
     }
   }
 
-  /// Fuera de su zona a una hora poco habitual (de noche).
   bool get isNight {
     final h = DateTime.now().hour;
     return h >= 22 || h < 6;
