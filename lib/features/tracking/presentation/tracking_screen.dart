@@ -72,6 +72,9 @@ class _TrackingScreenState extends State<TrackingScreen> {
         ? GeoUtils.distanceMeters(owner.latitude, owner.longitude, petPos.latitude, petPos.longitude)
         : null;
 
+    // En computador el panel va abajo a la izquierda y los botones abajo a la derecha.
+    final wide = context.isWide;
+
     // Sigue a la mascota mientras se mueve.
     if (_follow && petPos != null) _moveTo(petPos);
 
@@ -104,7 +107,11 @@ class _TrackingScreenState extends State<TrackingScreen> {
       SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-          child: Row(children: [
+          child: Align(
+           alignment: Alignment.topLeft,
+           child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: wide ? 560 : double.infinity),
+            child: Row(children: [
             Expanded(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -126,12 +133,14 @@ class _TrackingScreenState extends State<TrackingScreen> {
               onTap: () => Navigator.pushNamed(context, AppRoutes.zones),
             ),
           ]),
+           ),
+          ),
         ),
       ),
       // Botón "mi ubicación" (punto azul)
       Positioned(
         right: 16,
-        bottom: petPos == null ? 230 : 280,
+        bottom: wide ? (petPos == null ? 24 : 84) : (petPos == null ? 230 : 280),
         child: _locating
             ? const SizedBox(width: 48, height: 48, child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator(strokeWidth: 3)))
             : _RoundButton(
@@ -146,7 +155,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
       if (petPos != null)
         Positioned(
           right: 16,
-          bottom: 220,
+          bottom: wide ? 24 : 220,
           child: _RoundButton(
             icon: _follow ? Icons.my_location_rounded : Icons.location_searching_rounded,
             tooltip: l.t('Centrar en ${pet.name}', 'Center on ${pet.name}'),
@@ -160,7 +169,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
       // Panel inferior
       Positioned(
         left: 12,
-        right: 12,
+        right: wide ? null : 12,
+        width: wide ? 440 : null,
         bottom: 12,
         child: Material(
           color: context.colors.surface,
